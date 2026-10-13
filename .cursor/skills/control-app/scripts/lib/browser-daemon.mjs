@@ -34,10 +34,11 @@ function loc(page, locator) {
 fs.mkdirSync(stateDir, { recursive: true });
 try { fs.unlinkSync(sockPath); } catch { /* ignore */ }
 
+const headed = process.env.CONTROL_APP_HEADED === "1" || process.env.CONTROL_APP_HEADED === "true";
 const browser = await chromium.launch({
   executablePath: chromeBin,
-  headless: true,
-  args: ["--no-sandbox", "--disable-gpu"],
+  headless: !headed,
+  args: ["--no-sandbox", "--disable-gpu", "--window-size=1440,900"],
 });
 const context = await browser.newContext({
   viewport: { width: 1440, height: 900 },

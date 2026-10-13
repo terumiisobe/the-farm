@@ -81,9 +81,15 @@ cmd_launch() {
 
   local log="$CONTROL_APP_STATE_DIR/vite.log"
   local pid_file="$CONTROL_APP_STATE_DIR/vite.pid"
+  # Exec the vite binary directly so $pid is the server (not an npm wrapper that orphans children).
+  local vite_bin="$REPO_ROOT/node_modules/vite/bin/vite.js"
+  if [[ ! -f "$vite_bin" ]]; then
+    echo "control-app: missing $vite_bin after npm install" >&2
+    exit 1
+  fi
   (
     cd "$REPO_ROOT"
-    npx vite --host "$CONTROL_APP_HOST" --port "$CONTROL_APP_PORT" --strictPort
+    exec node "$vite_bin" --host "$CONTROL_APP_HOST" --port "$CONTROL_APP_PORT" --strictPort
   ) >"$log" 2>&1 &
   local pid=$!
   echo "$pid" >"$pid_file"
@@ -156,14 +162,6 @@ cmd_cleanup() {
     sleep 0.3
     if kill -0 "$pid" 2>/dev/null; then
       kill -9 "$pid" 2>/dev/null || true
-    fi
-    # Reap orphaned vite/node children that still own our port (only if still listening).
-    if command -v ss >/dev/null 2>&1; then
-      local child
-      child="$(ss -ltnp "sport = :${CONTROL_APP_PORT}" 2>/dev/null | sed -n 's/.*pid=\([0-9]\+\).*/\1/p' | head -1 || true)"
-      if [[ -n "${child:-}" ]] && kill -0 "$child" 2>/dev/null; then
-        kill "$child" 2>/dev/null || true
-      fi
     fi
     echo "control-app: stopped pid=$pid" >&2
   else

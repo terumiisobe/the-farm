@@ -70,21 +70,10 @@ try {
   if (mapCount < 1) fail("hive map (role=application) not found");
   if (botCount < 1) fail("WhatsApp BotLink not found");
 
-  // Confirm this PID owns the port (best-effort via /proc on Linux).
-  let portOwner = "unknown";
-  try {
-    const { execSync } = await import("node:child_process");
-    const out = execSync(`ss -ltnp 'sport = :${state.port}' 2>/dev/null || true`, { encoding: "utf8" });
-    portOwner = out.includes(String(state.pid)) ? `pid ${state.pid}` : out.trim().slice(0, 200) || "unconfirmed";
-  } catch {
-    /* optional */
-  }
-
   ok([
     `runId=${runId}`,
     `pid=${state.pid}`,
     `url=${baseUrl}`,
-    `portOwner=${portOwner}`,
     `farm=${farm}`,
     `brand=${brand}`,
     `map=present`,

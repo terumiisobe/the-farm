@@ -69,6 +69,8 @@ control-app browser snapshot --aria --path "$CONTROL_APP_ARTIFACTS/hive-map/sele
 
 Browser commands share one long-lived daemon page per `CONTROL_APP_RUN_ID` (Unix socket under the run state dir), so selection/zoom/legend state carries across steps. `control-app cleanup` and `control-app browser stop` tear that daemon down.
 
+For on-screen / video proof, set `CONTROL_APP_HEADED=1` before the first `control-app browser …` command so the daemon opens a visible Chrome window (default is headless).
+
 Never open the WhatsApp URL in a way that depends on an external account. Assert `href` with `control-app browser href --role link --name "/WhatsApp/"`.
 
 Feature recipes live in [`features/`](features/README.md). A proof that drives one convenient entry point is incomplete when the map lists others for the claimed change — cover every mapped entry point the change touches.
