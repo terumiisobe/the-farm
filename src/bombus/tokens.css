@@ -1,0 +1,113 @@
+/* Bombus — generated from tokens.json. Light is the default; add data-theme="dark" on <html> for dark. */
+:root, [data-theme="light"] {
+  --surface: #f7f1e5;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eee5d2;
+  --line: #e6dbbd;
+  --line-strong: #8f7f5c;
+  --ink: #1c211c;
+  --ink-muted: #5e5546;
+  --ink-inverse: #fdf8e1;
+  --primary: #fae588;
+  --on-primary: #1c211c;
+  --amber: #f8d08a;
+  --on-amber: var(--ink);
+  --hive-lid: #fbd84a;
+  --hive-body: #f5bb1d;
+  --propolis: #8a5a33;
+  --cocoa: #4a3f35;
+  --wing: #f7e6b0;
+  --focus-ring: #8a5a33;
+  --honey-cornsilk: #fdf8e1;
+  --honey-lemon-chiffon: #fdf4cb;
+  --honey-vanilla: #fcefb4;
+  --honey-jasmine: #fae588;
+  --honey-naples: #f9dc5c;
+  --status-stable: #00775f;
+  --on-status-stable: #ffffff;
+  --status-developing: #f5c518;
+  --on-status-developing: #1c211c;
+  --status-recovering: #c62828;
+  --on-status-recovering: #ffffff;
+  --status-lost: #6e665a;
+  --on-status-lost: #ffffff;
+  --status-sold: #a8dcae;
+  --on-status-sold: #1c211c;
+  --shadow-raised: 0 1px 2px rgba(28,33,28,0.10), 0 4px 12px rgba(28,33,28,0.08);
+  --shadow-button: 0 1px 2px rgba(28,33,28,0.18);
+  --shadow-map: 0 2px 8px rgba(0,0,0,0.45);
+}
+[data-theme="dark"] {
+  --surface: #1b1814;
+  --surface-raised: #26211b;
+  --surface-sunken: #13110e;
+  --line: #3a3229;
+  --line-strong: #7d6f58;
+  --ink: #f6efdc;
+  --ink-muted: #b9ad95;
+  --ink-inverse: #1c211c;
+  --primary: #fae588;
+  --on-primary: #1c211c;
+  --amber: #f8d08a;
+  --on-amber: #1c211c;
+  --hive-lid: #fbd84a;
+  --hive-body: #f5bb1d;
+  --propolis: #c89668;
+  --cocoa: #4a3f35;
+  --wing: #f7e6b0;
+  --focus-ring: #f9dc5c;
+  --status-stable: #2a9d7a;
+  --on-status-stable: #1c211c;
+  --status-developing: #f7cf3e;
+  --on-status-developing: #1c211c;
+  --status-recovering: #ff8080;
+  --on-status-recovering: #1c211c;
+  --status-lost: #a39a8a;
+  --on-status-lost: #1c211c;
+  --status-sold: #b8e8bd;
+  --on-status-sold: #1c211c;
+  --shadow-raised: 0 1px 2px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.35);
+  --shadow-button: 0 1px 2px rgba(0,0,0,0.5);
+  --shadow-map: 0 2px 8px rgba(0,0,0,0.6);
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+  --stroke-hairline: 1px;
+  --stroke-control: 1.5px;
+  --stroke-marker: 2px;
+  --stroke-focus: 2px;
+  --font-display: Outfit, "Noto Sans JP", system-ui, sans-serif;
+  --font-sans: "Atkinson Hyperlegible", "Noto Sans JP", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@font-face { font-family: 'Outfit'; src: url('./fonts/outfit-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Outfit'; src: url('./fonts/outfit-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Outfit'; src: url('./fonts/outfit-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Atkinson Hyperlegible'; src: url('./fonts/atkinson-hyperlegible-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Atkinson Hyperlegible'; src: url('./fonts/atkinson-hyperlegible-latin-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Atkinson Hyperlegible'; src: url('./fonts/atkinson-hyperlegible-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Atkinson Hyperlegible'; src: url('./fonts/atkinson-hyperlegible-latin-700-italic.woff2') format('woff2'); font-weight: 700; font-style: italic; font-display: swap; }
+@font-face { font-family: 'JetBrains Mono'; src: url('./fonts/jetbrains-mono-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'JetBrains Mono'; src: url('./fonts/jetbrains-mono-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+.display-xl { font-family: var(--font-display); font-size: 56px; line-height: 60px; font-weight: 700; letter-spacing: -0.02em; }
+.heading-lg { font-family: var(--font-display); font-size: 32px; line-height: 38px; font-weight: 600; letter-spacing: -0.01em; }
+.heading-md { font-family: var(--font-display); font-size: 22px; line-height: 28px; font-weight: 600; }
+.heading-sm { font-family: var(--font-display); font-size: 17px; line-height: 22px; font-weight: 600; }
+.body { font-family: var(--font-sans); font-size: 16px; line-height: 24px; font-weight: 400; }
+.body-sm { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 400; }
+.label { font-family: var(--font-sans); font-size: 13px; line-height: 16px; font-weight: 700; letter-spacing: 0.02em; }
+.caption { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 400; }
+.hive-code { font-family: var(--font-mono); font-size: 14px; line-height: 16px; font-weight: 600; letter-spacing: 0.04em; }
+.hive-code-lg { font-family: var(--font-mono); font-size: 24px; line-height: 28px; font-weight: 600; letter-spacing: 0.02em; }
+html { background: var(--surface); color: var(--ink); }

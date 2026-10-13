@@ -1,0 +1,307 @@
+{
+ "basemap": {
+  "image": "/assets/farm-basemap.jpg",
+  "bounds": [
+   [
+    -23.949258,
+    -46.988093
+   ],
+   [
+    -23.946742,
+    -46.983907
+   ]
+  ],
+  "attribution": "Imagem de satélite: exemplo · coordenadas ilustrativas",
+  "alt": "Imagem de satélite da propriedade"
+ },
+ "sections": [
+  {
+   "id": "A",
+   "name": "Setor A",
+   "polygon": [
+    [
+     -23.947214,
+     -46.987219
+    ],
+    [
+     -23.947214,
+     -46.986501
+    ],
+    [
+     -23.947557,
+     -46.986501
+    ],
+    [
+     -23.947557,
+     -46.987219
+    ]
+   ]
+  },
+  {
+   "id": "B",
+   "name": "Setor B",
+   "polygon": [
+    [
+     -23.947696,
+     -46.986809
+    ],
+    [
+     -23.947696,
+     -46.986529
+    ],
+    [
+     -23.94867,
+     -46.986529
+    ],
+    [
+     -23.94867,
+     -46.986809
+    ]
+   ]
+  },
+  {
+   "id": "C",
+   "name": "Setor C",
+   "polygon": [
+    [
+     -23.947625,
+     -46.987347
+    ],
+    [
+     -23.947625,
+     -46.986894
+    ],
+    [
+     -23.947971,
+     -46.986894
+    ],
+    [
+     -23.947971,
+     -46.987347
+    ]
+   ]
+  },
+  {
+   "id": "D",
+   "name": "Setor D",
+   "polygon": [
+    [
+     -23.947356,
+     -46.986448
+    ],
+    [
+     -23.947356,
+     -46.98608
+    ],
+    [
+     -23.948019,
+     -46.98608
+    ],
+    [
+     -23.948019,
+     -46.986448
+    ]
+   ]
+  }
+ ],
+ "hives": [
+  {
+   "code": "1",
+   "lat": -23.947389,
+   "lng": -46.986766,
+   "status": "stable",
+   "section": "A",
+   "addedAt": "2024-08-14",
+   "lastInspection": "2026-10-05"
+  },
+  {
+   "code": "2",
+   "lat": -23.94735,
+   "lng": -46.986635,
+   "status": "stable",
+   "section": "A",
+   "addedAt": "2024-08-14",
+   "lastInspection": "2026-10-05"
+  },
+  {
+   "code": "3",
+   "lat": -23.947499,
+   "lng": -46.986812,
+   "status": "recovering",
+   "section": "A",
+   "addedAt": "2025-02-20",
+   "lastInspection": "2026-09-28",
+   "notes": "Poucos potes de pólen. Iniciar alimentação proteica."
+  },
+  {
+   "code": "4",
+   "lat": -23.947492,
+   "lng": -46.986593,
+   "status": "stable",
+   "section": "A",
+   "addedAt": "2025-02-20",
+   "lastInspection": "2026-10-05"
+  },
+  {
+   "code": "5",
+   "lat": -23.947505,
+   "lng": -46.98706,
+   "status": "developing",
+   "section": "A",
+   "addedAt": "2026-09-10",
+   "lastInspection": "2026-10-08",
+   "notes": "Divisão da colmeia 1. Rainha virgem observada em 08/10."
+  },
+  {
+   "code": "6",
+   "lat": -23.947783,
+   "lng": -46.986727,
+   "status": "stable",
+   "section": "B",
+   "addedAt": "2023-11-02",
+   "lastInspection": "2026-10-01"
+  },
+  {
+   "code": "7",
+   "lat": -23.94788,
+   "lng": -46.986607,
+   "status": "stable",
+   "section": "B",
+   "addedAt": "2023-11-02",
+   "lastInspection": "2026-10-01"
+  },
+  {
+   "code": "8",
+   "lat": -23.94801,
+   "lng": -46.986713,
+   "status": "lost",
+   "section": "B",
+   "addedAt": "2024-03-15",
+   "lastInspection": "2026-10-09",
+   "notes": "Colônia perdida para forídeos em 09/10. Caixa recolhida para limpeza."
+  },
+  {
+   "code": "9",
+   "lat": -23.948139,
+   "lng": -46.986611,
+   "status": "stable",
+   "section": "B",
+   "addedAt": "2024-03-15",
+   "lastInspection": "2026-10-01"
+  },
+  {
+   "code": "10",
+   "lat": -23.948268,
+   "lng": -46.986727,
+   "status": "recovering",
+   "section": "B",
+   "addedAt": "2024-09-01",
+   "lastInspection": "2026-09-22",
+   "notes": "Caixa úmida após chuvas. Trocar o fundo."
+  },
+  {
+   "code": "11",
+   "lat": -23.948398,
+   "lng": -46.986603,
+   "status": "stable",
+   "section": "B",
+   "addedAt": "2024-09-01",
+   "lastInspection": "2026-10-01"
+  },
+  {
+   "code": "12",
+   "lat": -23.948553,
+   "lng": -46.986692,
+   "status": "sold",
+   "section": "B",
+   "addedAt": "2025-06-30",
+   "lastInspection": "2026-09-15",
+   "notes": "Vendida em 15/09/2026."
+  },
+  {
+   "code": "13",
+   "lat": -23.947719,
+   "lng": -46.987237,
+   "status": "stable",
+   "section": "C",
+   "addedAt": "2024-05-10",
+   "lastInspection": "2026-09-30"
+  },
+  {
+   "code": "14",
+   "lat": -23.947744,
+   "lng": -46.987025,
+   "status": "stable",
+   "section": "C",
+   "addedAt": "2024-05-10",
+   "lastInspection": "2026-09-30"
+  },
+  {
+   "code": "15",
+   "lat": -23.94788,
+   "lng": -46.987173,
+   "status": "developing",
+   "section": "C",
+   "addedAt": "2026-09-25",
+   "lastInspection": "2026-10-08",
+   "notes": "Divisão da colmeia 16."
+  },
+  {
+   "code": "16",
+   "lat": -23.947893,
+   "lng": -46.986975,
+   "status": "stable",
+   "section": "C",
+   "addedAt": "2025-01-18",
+   "lastInspection": "2026-09-30"
+  },
+  {
+   "code": "17",
+   "lat": -23.947447,
+   "lng": -46.986338,
+   "status": "stable",
+   "section": "D",
+   "addedAt": "2025-04-04",
+   "lastInspection": "2026-10-03"
+  },
+  {
+   "code": "18",
+   "lat": -23.947557,
+   "lng": -46.986182,
+   "status": "recovering",
+   "section": "D",
+   "addedAt": "2025-04-04",
+   "lastInspection": "2026-09-20",
+   "notes": "Atividade baixa na entrada. Revisar rainha."
+  },
+  {
+   "code": "19",
+   "lat": -23.947712,
+   "lng": -46.986324,
+   "status": "stable",
+   "section": "D",
+   "addedAt": "2025-04-04",
+   "lastInspection": "2026-10-03"
+  },
+  {
+   "code": "20",
+   "lat": -23.947842,
+   "lng": -46.986179,
+   "status": "stable",
+   "section": "D",
+   "addedAt": "2025-10-12",
+   "lastInspection": "2026-10-03"
+  },
+  {
+   "code": "21",
+   "lat": -23.947945,
+   "lng": -46.986306,
+   "status": "sold",
+   "section": "D",
+   "addedAt": "2025-10-12",
+   "lastInspection": "2026-09-15",
+   "notes": "Vendida em 15/09/2026."
+  }
+ ],
+ "_note": "EXAMPLE DATA. Coordinates are placeholders: replace basemap.bounds with the real corners of your farm image and each hive's lat/lng with GPS readings. Replace hives with what your backend returns."
+}
