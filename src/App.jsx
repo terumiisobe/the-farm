@@ -23,7 +23,6 @@ export default function App() {
       hives={farm.hives}
       sections={farm.sections}
       basemap={farm.basemap}
-      updatedAt={new Date().toLocaleDateString("pt-BR")}
       whatsappUrl={WHATSAPP_URL}
     />
   );
