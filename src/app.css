@@ -37,8 +37,9 @@ body {
   justify-content: space-between;
   gap: var(--space-4);
   flex-wrap: nowrap;
-  min-height: 68px;
-  padding: var(--space-3) var(--space-4);
+  min-height: 81px;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: var(--stroke-hairline) solid var(--line);
 }
 
 .top h1 {
@@ -65,30 +66,15 @@ body {
   border-radius: 0;
 }
 
+/* Prototype A: shrink only the full-width strip. Keep bundle height, icon, go mark. */
 .top .bb-botlink {
-  box-sizing: border-box;
   flex: 0 0 auto;
   width: max-content;
   max-width: 100%;
   min-width: 44px;
-  min-height: 44px;
-  height: 44px;
-  padding: 0 var(--space-3) 0 var(--space-1);
-  gap: var(--space-2);
-}
-
-.top .bb-botlink__icon {
-  width: 36px;
-  height: 36px;
 }
 
 .top .bb-botlink__title {
-  flex: 0 0 auto;
+  flex: none;
   white-space: nowrap;
-}
-
-.top .bb-botlink__go {
-  width: 32px;
-  height: 32px;
-  margin-right: 0;
 }

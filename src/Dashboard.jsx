@@ -4,7 +4,7 @@ export default function Dashboard({ farmName, hives, sections, basemap, whatsapp
   return (
     <div className="page">
       <header className="top">
-        <h1 className="heading-md">{farmName}</h1>
+        <h1 className="heading-sm">{farmName}</h1>
         <BotLink href={whatsappUrl} title="WhatsApp" />
       </header>
       <div className="map-stage">
