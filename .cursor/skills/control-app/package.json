@@ -1,0 +1,9 @@
+{
+  "name": "control-app",
+  "private": true,
+  "type": "module",
+  "description": "Verification harness for the Bombus dashboard (not a product dependency).",
+  "dependencies": {
+    "playwright-core": "1.55.0"
+  }
+}
