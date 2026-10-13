@@ -37,7 +37,7 @@ describe("Dashboard", () => {
     expect(header.textContent.replace(/\s+/g, "")).toBe("MeliponárioIsobeWhatsApp");
     expect(container.querySelector('img[src="/assets/bombus-bee-transparent.png"]')).toBeNull();
 
-    const links = container.querySelectorAll("a.bb-botlink");
+    const links = container.querySelectorAll("a.wa-header");
     expect(Array.from(links).map((link) => link.getAttribute("href"))).toEqual([WHATSAPP_URL]);
     expect(header.contains(links[0])).toBe(true);
 

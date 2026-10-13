@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-/**
- * Long-lived Playwright session for one control-app run.
- * Speaks JSON-lines over a Unix socket at $CONTROL_APP_STATE_DIR/browser.sock.
- */
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
@@ -32,7 +28,7 @@ function loc(page, locator) {
 }
 
 fs.mkdirSync(stateDir, { recursive: true });
-try { fs.unlinkSync(sockPath); } catch { /* ignore */ }
+try { fs.unlinkSync(sockPath); } catch {}
 
 const browser = await chromium.launch({
   executablePath: chromeBin,
@@ -89,9 +85,9 @@ async function handle(req) {
     }
     case "stop": {
       setTimeout(async () => {
-        try { await browser.close(); } catch { /* ignore */ }
-        try { fs.unlinkSync(sockPath); } catch { /* ignore */ }
-        try { fs.unlinkSync(metaPath); } catch { /* ignore */ }
+        try { await browser.close(); } catch {}
+        try { fs.unlinkSync(sockPath); } catch {}
+        try { fs.unlinkSync(metaPath); } catch {}
         process.exit(0);
       }, 50);
       return "stopping";
@@ -119,7 +115,7 @@ const server = net.createServer((socket) => {
     }
     try {
       socket.write(JSON.stringify(resp) + "\n");
-    } catch { /* ignore */ }
+    } catch {}
   });
 });
 
@@ -132,8 +128,8 @@ server.listen(sockPath, () => {
 
 function shutdown() {
   browser.close().finally(() => {
-    try { fs.unlinkSync(sockPath); } catch { /* ignore */ }
-    try { fs.unlinkSync(metaPath); } catch { /* ignore */ }
+    try { fs.unlinkSync(sockPath); } catch {}
+    try { fs.unlinkSync(metaPath); } catch {}
     process.exit(0);
   });
 }

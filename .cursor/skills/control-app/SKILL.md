@@ -18,8 +18,8 @@ export CONTROL_APP_RUN_ID="${CONTROL_APP_RUN_ID:-$(date +%s)}"
 export CONTROL_APP_PORT="${CONTROL_APP_PORT:-5173}"
 export PATH="$PWD/.cursor/skills/control-app/scripts:$PATH"
 
-control-app launch          # prints http://127.0.0.1:$PORT
-control-app doctor          # must OK before any drive
+control-app launch
+control-app doctor
 ```
 
 - Installs app deps (`npm install` at repo root) and harness deps (skill-local `playwright-core`) if missing.
@@ -111,8 +111,8 @@ Executable entrypoint:
 Put it on `PATH` as shown in Launch, or invoke by absolute path. Skill-local Node deps install into `.cursor/skills/control-app/node_modules` (harness only — not a product dependency). Requires system Chrome (`google-chrome` / `chromium`).
 
 ```bash
-control-app env                 # resolved configuration
-control-app browser help        # drive actions
+control-app env
+control-app browser help
 ```
 
 ## Maintenance

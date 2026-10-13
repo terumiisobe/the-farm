@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-/**
- * Read-only health check: is this control-app instance worth driving?
- */
 import fs from "node:fs";
 import { chromium } from "playwright-core";
 
@@ -75,15 +72,12 @@ try {
   if (botCount < 1) fail("WhatsApp BotLink not found in header");
   if (scroll.sh > scroll.ch + 1) fail(`page scrolls (scrollHeight ${scroll.sh} > clientHeight ${scroll.ch})`);
 
-  // Confirm this PID owns the port (best-effort via /proc on Linux).
   let portOwner = "unknown";
   try {
     const { execSync } = await import("node:child_process");
     const out = execSync(`ss -ltnp 'sport = :${state.port}' 2>/dev/null || true`, { encoding: "utf8" });
     portOwner = out.includes(String(state.pid)) ? `pid ${state.pid}` : out.trim().slice(0, 200) || "unconfirmed";
-  } catch {
-    /* optional */
-  }
+  } catch {}
 
   ok([
     `runId=${runId}`,

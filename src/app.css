@@ -66,15 +66,14 @@ body {
   border-radius: 0;
 }
 
-/* Prototype A: shrink only the full-width strip. Keep bundle height, icon, go mark. */
-.top .bb-botlink {
+.wa-header {
   flex: 0 0 auto;
   width: max-content;
   max-width: 100%;
   min-width: 44px;
 }
 
-.top .bb-botlink__title {
+.wa-header .bb-botlink__title {
   flex: none;
   white-space: nowrap;
 }
