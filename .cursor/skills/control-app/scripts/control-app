@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$SKILL_DIR/../../.." && pwd)"
+if [[ ! -f "$REPO_ROOT/package.json" ]] || ! grep -q '"vite"' "$REPO_ROOT/package.json" 2>/dev/null; then
+  echo "control-app: expected Bombus repo root with vite at $REPO_ROOT" >&2
+  exit 1
+fi
+
+export CONTROL_APP_SKILL_DIR="$SKILL_DIR"
+export CONTROL_APP_REPO_ROOT="$REPO_ROOT"
+export CONTROL_APP_RUN_ID="${CONTROL_APP_RUN_ID:-default}"
+export CONTROL_APP_PORT="${CONTROL_APP_PORT:-5173}"
+export CONTROL_APP_HOST="${CONTROL_APP_HOST:-127.0.0.1}"
+export CONTROL_APP_BASE_URL="${CONTROL_APP_BASE_URL:-http://${CONTROL_APP_HOST}:${CONTROL_APP_PORT}}"
+export CONTROL_APP_STATE_DIR="${CONTROL_APP_STATE_DIR:-/tmp/control-app-${CONTROL_APP_RUN_ID}}"
+export CONTROL_APP_ARTIFACTS="${CONTROL_APP_ARTIFACTS:-$SKILL_DIR/artifacts}"
+export CONTROL_APP_CHROME_BIN="${CONTROL_APP_CHROME_BIN:-$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || true)}"
+
+mkdir -p "$CONTROL_APP_STATE_DIR" "$CONTROL_APP_ARTIFACTS"
+
+usage() {
+  cat <<'EOF'
+Usage: control-app <command> [args]
+
+Commands:
+  launch              Start Vite for this run (isolated port). Prints base URL.
+  doctor              Read-only health check for the launched instance.
+  browser <action>    Drive the dashboard (see: control-app browser help).
+  cleanup             Stop the instance this run started. Keeps artifacts.
+  env                 Print resolved env (debug).
+
+Env:
+  CONTROL_APP_RUN_ID    Isolate concurrent runs (default: default)
+  CONTROL_APP_PORT      Dev server port (default: 5173)
+  CONTROL_APP_HOST      Bind/listen host (default: 127.0.0.1)
+  CONTROL_APP_BASE_URL  Override URL (default: http://HOST:PORT)
+  CONTROL_APP_ARTIFACTS Evidence directory (default: .cursor/skills/control-app/artifacts)
+EOF
+}
+
+cmd_env() {
+  cat <<EOF
+CONTROL_APP_REPO_ROOT=$CONTROL_APP_REPO_ROOT
+CONTROL_APP_SKILL_DIR=$CONTROL_APP_SKILL_DIR
+CONTROL_APP_RUN_ID=$CONTROL_APP_RUN_ID
+CONTROL_APP_PORT=$CONTROL_APP_PORT
+CONTROL_APP_HOST=$CONTROL_APP_HOST
+CONTROL_APP_BASE_URL=$CONTROL_APP_BASE_URL
+CONTROL_APP_STATE_DIR=$CONTROL_APP_STATE_DIR
+CONTROL_APP_ARTIFACTS=$CONTROL_APP_ARTIFACTS
+CONTROL_APP_CHROME_BIN=$CONTROL_APP_CHROME_BIN
+EOF
+}
+
+ensure_deps() {
+  if [[ ! -d "$REPO_ROOT/node_modules/vite" ]]; then
+    echo "control-app: installing app deps in $REPO_ROOT" >&2
+    (cd "$REPO_ROOT" && npm install)
+  fi
+  if [[ ! -d "$SKILL_DIR/node_modules/playwright-core" ]]; then
+    echo "control-app: installing harness deps in $SKILL_DIR" >&2
+    (cd "$SKILL_DIR" && npm install --no-fund --no-audit)
+  fi
+}
+
+cmd_launch() {
+  ensure_deps
+  local state="$CONTROL_APP_STATE_DIR/state.json"
+  if [[ -f "$state" ]]; then
+    local old_pid
+    old_pid="$(node -e "const s=require(process.argv[1]); process.stdout.write(String(s.pid||''))" "$state" 2>/dev/null || true)"
+    if [[ -n "${old_pid:-}" ]] && kill -0 "$old_pid" 2>/dev/null; then
+      echo "control-app: already running pid=$old_pid url=$CONTROL_APP_BASE_URL" >&2
+      echo "$CONTROL_APP_BASE_URL"
+      return 0
+    fi
+  fi
+
+  local log="$CONTROL_APP_STATE_DIR/vite.log"
+  local pid_file="$CONTROL_APP_STATE_DIR/vite.pid"
+  (
+    cd "$REPO_ROOT"
+    npx vite --host "$CONTROL_APP_HOST" --port "$CONTROL_APP_PORT" --strictPort
+  ) >"$log" 2>&1 &
+  local pid=$!
+  echo "$pid" >"$pid_file"
+
+  local i ready=0
+  for i in $(seq 1 80); do
+    if ! kill -0 "$pid" 2>/dev/null; then
+      echo "control-app: vite exited early; see $log" >&2
+      tail -n 40 "$log" >&2 || true
+      exit 1
+    fi
+    if curl -fsS "$CONTROL_APP_BASE_URL/" 2>/dev/null | grep -q 'id="root"'; then
+      ready=1
+      break
+    fi
+    sleep 0.25
+  done
+  if [[ "$ready" -ne 1 ]]; then
+    echo "control-app: timed out waiting for $CONTROL_APP_BASE_URL (log: $log)" >&2
+    kill "$pid" 2>/dev/null || true
+    exit 1
+  fi
+
+  node -e '
+    const fs = require("fs");
+    const state = {
+      pid: Number(process.argv[1]),
+      port: Number(process.argv[2]),
+      host: process.argv[3],
+      baseUrl: process.argv[4],
+      runId: process.argv[5],
+      repoRoot: process.argv[6],
+      startedAt: new Date().toISOString(),
+      log: process.argv[7]
+    };
+    fs.writeFileSync(process.argv[8], JSON.stringify(state, null, 2));
+  ' "$pid" "$CONTROL_APP_PORT" "$CONTROL_APP_HOST" "$CONTROL_APP_BASE_URL" \
+    "$CONTROL_APP_RUN_ID" "$REPO_ROOT" "$log" "$state"
+
+  echo "control-app: launched pid=$pid url=$CONTROL_APP_BASE_URL" >&2
+  echo "$CONTROL_APP_BASE_URL"
+}
+
+cmd_doctor() {
+  ensure_deps
+  node "$SKILL_DIR/scripts/lib/doctor.mjs"
+}
+
+cmd_browser() {
+  ensure_deps
+  node "$SKILL_DIR/scripts/lib/browser.mjs" "$@"
+}
+
+cmd_cleanup() {
+  if [[ -S "$CONTROL_APP_STATE_DIR/browser.sock" ]] || [[ -f "$CONTROL_APP_STATE_DIR/browser-server.json" ]]; then
+    node "$SKILL_DIR/scripts/lib/browser.mjs" stop >/dev/null 2>&1 || true
+  fi
+
+  local state="$CONTROL_APP_STATE_DIR/state.json"
+  local pid=""
+  if [[ -f "$state" ]]; then
+    pid="$(node -e "const s=require(process.argv[1]); process.stdout.write(String(s.pid||''))" "$state" 2>/dev/null || true)"
+  fi
+  if [[ -z "${pid:-}" && -f "$CONTROL_APP_STATE_DIR/vite.pid" ]]; then
+    pid="$(cat "$CONTROL_APP_STATE_DIR/vite.pid" 2>/dev/null || true)"
+  fi
+  if [[ -n "${pid:-}" ]] && kill -0 "$pid" 2>/dev/null; then
+    kill "$pid" 2>/dev/null || true
+    sleep 0.3
+    if kill -0 "$pid" 2>/dev/null; then
+      kill -9 "$pid" 2>/dev/null || true
+    fi
+    if command -v ss >/dev/null 2>&1; then
+      local child
+      child="$(ss -ltnp "sport = :${CONTROL_APP_PORT}" 2>/dev/null | sed -n 's/.*pid=\([0-9]\+\).*/\1/p' | head -1 || true)"
+      if [[ -n "${child:-}" && "$child" != "$pid" ]] && kill -0 "$child" 2>/dev/null; then
+        kill "$child" 2>/dev/null || true
+      fi
+    fi
+    echo "control-app: stopped pid=$pid" >&2
+  else
+    echo "control-app: no live process for run $CONTROL_APP_RUN_ID" >&2
+  fi
+  rm -f "$CONTROL_APP_STATE_DIR/state.json" "$CONTROL_APP_STATE_DIR/vite.pid" \
+    "$CONTROL_APP_STATE_DIR/browser-server.json" "$CONTROL_APP_STATE_DIR/browser.sock" 2>/dev/null || true
+  echo "control-app: cleanup done (artifacts kept at $CONTROL_APP_ARTIFACTS)" >&2
+}
+
+main() {
+  local cmd="${1:-}"
+  if [[ $# -gt 0 ]]; then shift; fi
+  case "$cmd" in
+    launch) cmd_launch "$@" ;;
+    doctor) cmd_doctor "$@" ;;
+    browser) cmd_browser "$@" ;;
+    cleanup) cmd_cleanup "$@" ;;
+    env) cmd_env "$@" ;;
+    -h|--help|help) usage ;;
+    "") usage; exit 1 ;;
+    *) echo "control-app: unknown command: $cmd" >&2; usage; exit 1 ;;
+  esac
+}
+
+main "$@"
