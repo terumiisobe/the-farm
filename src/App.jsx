@@ -40,7 +40,6 @@ export default function App() {
   );
 }
 
-// An img shares the map tile cache. A fetch probe would fail CORS cases the map still paints.
 export function probeTile(url, onFail, ImageCtor = globalThis.Image) {
   const img = new ImageCtor();
   let done = false;
