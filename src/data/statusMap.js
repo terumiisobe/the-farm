@@ -1,5 +1,5 @@
 // Bombus understands five status keys: stable | developing | recovering | lost | sold.
-// If your backend sends Portuguese words, map them here before passing hives to the map.
+// Portuguese labels from older payloads map onto those keys.
 const MAP = {
   "estavel": "stable", "estável": "stable",
   "desenvolvendo": "developing",
@@ -8,10 +8,12 @@ const MAP = {
   "vendida": "sold",
 };
 
+// A missing status is unknown. Mapping it to stable would claim a colony we have not seen.
 export function toStatusKey(value) {
-  if (!value) return "stable";
-  const v = String(value).trim().toLowerCase();
-  return MAP[v] || v;
+  if (typeof value !== "string") return "unknown";
+  const key = value.trim().toLowerCase();
+  if (!key) return "unknown";
+  return MAP[key] || key;
 }
 
 function finiteCoord(value) {
