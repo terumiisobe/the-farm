@@ -3,6 +3,18 @@
  "address": "",
  "updatedAt": null,
  "basemap": {
+  "image": "/assets/farm-basemap.png",
+  "bounds": [
+   [
+    -25.762684,
+    -49.189889
+   ],
+   [
+    -25.761622,
+    -49.188210
+   ]
+  ],
+  "attribution": "Imagem da propriedade",
   "satellite": {
    "tiles": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg",
    "maxZoom": 18,

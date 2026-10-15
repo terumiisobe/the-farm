@@ -23,14 +23,13 @@ src/
     bombus.d.ts        props of every component (documentation)
     fonts/             Outfit, Atkinson Hyperlegible, JetBrains Mono
   data/
-    example-farm.json  sample farm with operator still + bounds, EOX fallback, 4 sections, 21 hives
-    mock-still-farm.json  harness still (same operator still box)
-    mock-eox-farm.json   no still: EOX path for harness (`/?farm=eox`)
+    example-farm.json  test fixture: operator still + bounds, EOX fallback, sections, hives
+    farmSnapshot.js    reads the Vite env and GET /v1/meliponarios/{id}
     resolveBasemap.js  picks the farm still, EOX tiles, or the sample image
     resolveFarmView.js chooses where the camera looks from hive GPS, farm centre, or a still box
     statusMap.js       turns your backend's hives into what the map expects
-  Dashboard.jsx        the app's single screen
-  App.jsx              loads the data — swap the example for your API here
+  Dashboard.jsx        the app's single screen (loading / ready / failed)
+  App.jsx              loads the farm snapshot and selects the basemap
   app.css              page layout (tokens only)
 public/assets/         logo (transparent), hive-box icon, farm satellite image
 ```
@@ -46,7 +45,19 @@ spacing are CSS variables: `color: var(--ink); background: var(--surface); paddi
 
 ## Connect your data
 
-Each hive needs (see `src/data/statusMap.js` → `toHive`, adjust the field names to your API):
+The map reads one farm snapshot. Copy `.env.example` to `.env.local` when you have an API. Leave `VITE_API_BASE_URL` unset to keep the bundled example farm, including for `vite preview`. A production build must set all three.
+
+```bash
+VITE_API_BASE_URL=https://api.example
+VITE_MELIPONARIO_ID=10
+VITE_USER_ID=1
+```
+
+`VITE_API_BASE_URL` is the origin, with no trailing slash. `VITE_MELIPONARIO_ID` is the id in `GET /v1/meliponarios/{id}`. `VITE_USER_ID` is sent as the `X-User-Id` header. If the base URL is set and either id is missing or not digits, the page shows a load error.
+
+The response supplies the farm name, the address, a freshness time, and the hives. Optional `center`, `bounds`, and `basemap.image` + `basemap.bounds` (plus attribution) carry place and the farm still. This app keeps the WhatsApp link and local EOX `satellite` / sample `fallback` when the API omits a still. Hive sections stay on the example map only. An API farm draws no section polygons.
+
+Each hive uses these fields:
 
 | field | example | shown as |
 | --- | --- | --- |
@@ -58,13 +69,13 @@ Each hive needs (see `src/data/statusMap.js` → `toHive`, adjust the field name
 | `lastInspection` | `"2026-10-09"` | Última revisão em (+ "há N dias") |
 | `notes` | `"Trocar o fundo."` | Notas |
 
-Portuguese status words from the backend (`estavel`, `perdida`…) are mapped by `toStatusKey`.
+Portuguese status words (`estavel`, `perdida`, and the rest) still map through `toStatusKey`. A missing status stays `unknown`.
 
 ## Basemap
 
 The map paints one basemap. A farm still wins when the payload includes `basemap.image` and `basemap.bounds` and that image loads. Free EOX Sentinel-2 Cloudless 2025 tiles are the fallback when the still is absent or fails before it decodes. The `fallback` image is the offline sample, and it is also the paint after every live tile has failed. No account and no API key.
 
-`src/data/example-farm.json` is the default offline farm. It includes top-level `basemap.image` (`/assets/farm-basemap.png`) and operator SW/NE bounds `[[-25.762684, -49.189889], [-25.761622, -49.188210]]`, so `/` paints the still. EOX stays on `basemap.satellite` as fallback. Open `/?farm=eox` for the no-still path. Both files keep an empty `address`. The browser does not geocode `address`. Do not commit a street, a house number, or a private geocode.
+Local basemap defaults use `/assets/farm-basemap.png` with operator SW/NE `[[-25.762684, -49.189889], [-25.761622, -49.188210]]`. EOX stays on `basemap.satellite` as fallback. The browser does not geocode `address`. Do not commit a street, a house number, or a private geocode.
 
 ```json
 "basemap": {

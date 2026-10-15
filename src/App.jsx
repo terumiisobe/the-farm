@@ -1,29 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import Dashboard from "./Dashboard.jsx";
-import example from "./data/example-farm.json";
-import eoxFarm from "./data/mock-eox-farm.json";
-import stillFarm from "./data/mock-still-farm.json";
 import {
   INITIAL_LATCH,
   nextLoadLatch,
   parseFarmBasemap,
   selectBasemap,
 } from "./data/resolveBasemap.js";
+import { loadFarm, LOADING, localFarmLoad, readFarmSource } from "./data/farmSnapshot.js";
 import { farmViewKey, resolveFarmView } from "./data/resolveFarmView.js";
-import { pinLatLng, toHive } from "./data/statusMap.js";
+import { pinLatLng } from "./data/statusMap.js";
 
-// Replace with the bot's real number, e.g. "https://wa.me/5511999999999".
 const WHATSAPP_URL = "https://wa.me/";
 const PROBE_TIMEOUT_MS = 8000;
-/** Neighbour preload floods Network while debugging zoom; viewport tiles + one probe are enough. */
 const PRELOAD_NEIGHBOUR_TILES = false;
-
-function bundledFarm(search) {
-  const name = new URLSearchParams(search).get("farm");
-  if (name === "eox") return eoxFarm;
-  if (name === "still") return stillFarm;
-  return example;
-}
+const SOURCE = readFarmSource(import.meta.env);
 
 function farmLatchKey(farm) {
   if (!farm || typeof farm !== "object") return "local";
@@ -32,16 +22,28 @@ function farmLatchKey(farm) {
   return image || "local";
 }
 
-export default function App() {
-  const [farm, setFarm] = useState(null);
+/**
+ * @param {{ source?: import("./data/farmSnapshot.js").FarmSource }} props
+ */
+export default function App({ source = SOURCE } = {}) {
+  const [attempt, setAttempt] = useState(0);
+  const [load, setLoad] = useState(() => localFarmLoad(source) ?? LOADING);
   const [latch, setLatch] = useState(INITIAL_LATCH);
 
   useEffect(() => {
-    // TODO: load from your backend instead of the bundled file.
-    const payload = bundledFarm(window.location.search);
-    setFarm({ ...payload, hives: payload.hives.map(toHive) });
-  }, []);
+    const controller = new AbortController();
+    let active = true;
+    if (!localFarmLoad(source)) setLoad(LOADING);
+    loadFarm(source, { signal: controller.signal }).then((next) => {
+      if (active && !controller.signal.aborted) setLoad(next);
+    });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [source, attempt]);
 
+  const farm = load.phase === "ready" ? load.farm : null;
   const latchKey = farmLatchKey(farm);
   useEffect(() => {
     setLatch(INITIAL_LATCH);
@@ -49,7 +51,7 @@ export default function App() {
 
   const hives = useMemo(() => {
     if (!farm) return [];
-    return (farm.hives ?? []).flatMap((hive) => (pinLatLng(hive) ? [toHive(hive)] : []));
+    return (farm.hives ?? []).filter((hive) => pinLatLng(hive));
   }, [farm]);
   const catalog = useMemo(
     () => (farm ? parseFarmBasemap(farm.basemap) : null),
@@ -60,9 +62,8 @@ export default function App() {
     [catalog, latch, hives],
   );
   const located = farm ? { ...farm, hives } : null;
-  const view = located && selection ? resolveFarmView(located, selection) : null;
+  const farmView = located && selection ? resolveFarmView(located, selection) : null;
   const satelliteLive = selection != null && selection.kind === "satellite" && latch.tiles !== "failed";
-  // A soft latch rebuilds the selection. The URL string stays put, so the probe does not start again.
   const probeUrl = satelliteLive ? selection.probeUrl : null;
   const preloadKey = satelliteLive && PRELOAD_NEIGHBOUR_TILES
     ? selection.preloadUrls.join("\n")
@@ -99,21 +100,25 @@ export default function App() {
     return preloadImages(preloadKey.split("\n"));
   }, [preloadKey]);
 
-  if (!located || !selection || !view) return null;
+  const view = located && selection && farmView
+    ? {
+      phase: "ready",
+      farm: { ...farm, hives },
+      basemap: selection.paint,
+      basemapStatus: selection.status,
+      maxZoom: farmView.maxZoom,
+      minZoom: farmView.minZoom,
+      center: farmView.center,
+      zoom: farmView.zoom,
+      mapKey: farmViewKey(located, farmView, selection.kind),
+    }
+    : load;
 
   return (
     <Dashboard
-      farmName="Meliponário Isobe"
-      hives={hives}
-      sections={located.sections}
-      basemap={selection.paint}
-      basemapStatus={selection.status}
+      view={view}
       whatsappUrl={WHATSAPP_URL}
-      maxZoom={view.maxZoom}
-      minZoom={view.minZoom}
-      center={view.center}
-      zoom={view.zoom}
-      mapKey={farmViewKey(located, view, selection.kind)}
+      onRetry={() => setAttempt((n) => n + 1)}
     />
   );
 }

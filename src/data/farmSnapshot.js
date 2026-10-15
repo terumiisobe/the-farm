@@ -7,12 +7,10 @@ import { toStatusKey } from "./statusMap.js";
  */
 
 /**
- * A hive the map can plot. `code` is a non-empty string. `lat` and `lng` are finite numbers.
  * @typedef {Hive & { code: string, lat: number, lng: number }} MapHive
  */
 
 /**
- * A hive the snapshot listed and the map cannot place.
  * @typedef {{
  *   code: string | null,
  *   status: string,
@@ -24,6 +22,20 @@ import { toStatusKey } from "./statusMap.js";
  */
 
 /**
+ * @typedef {[number, number]} LatLng
+ * @typedef {[LatLng, LatLng]} GeoBounds
+ */
+
+/**
+ * @typedef {{
+ *   image: string,
+ *   bounds: GeoBounds,
+ *   attribution?: string,
+ *   alt?: string,
+ * }} StillOverlay
+ */
+
+/**
  * @typedef {{
  *   name: string,
  *   address: string,
@@ -31,6 +43,9 @@ import { toStatusKey } from "./statusMap.js";
  *   hives: MapHive[],
  *   offMap: OffMapHive[],
  *   sections: Section[],
+ *   basemap: object,
+ *   center?: LatLng,
+ *   bounds?: GeoBounds,
  * }} Farm
  */
 
@@ -62,11 +77,15 @@ const FAILED = {
   unavailable: Object.freeze({ phase: "failed", reason: "unavailable" }),
 };
 
+/** Local EOX + sample arms. Still comes from the snapshot when present. */
+export const LOCAL_FARM_BASEMAP = Object.freeze({
+  satellite: example.basemap.satellite,
+  fallback: example.basemap.fallback,
+});
+
 let cachedExample;
 
 /**
- * Env boundary. An unset base URL selects the bundled example.
- * A base URL with a missing or non-numeric id is misconfigured, not a throw.
  * @param {Record<string, string | undefined>} env
  * @returns {FarmSource}
  */
@@ -95,8 +114,6 @@ export function readFarmSource(env) {
 }
 
 /**
- * FarmLoad for sources that need no network. Null when the caller must await `loadFarm`.
- * Example and misconfigured env paint on the first frame, with no loading flash.
  * @param {FarmSource} source
  * @returns {FarmLoad | null}
  */
@@ -107,71 +124,139 @@ export function localFarmLoad(source) {
 }
 
 /**
- * Total. Resolves a FarmLoad and never rejects.
- * Same source and same server state produce the same outcome.
  * @param {FarmSource} source
  * @param {{ signal?: AbortSignal, fetch?: typeof globalThis.fetch }} [opts]
  * @returns {Promise<FarmLoad>}
  */
 export async function loadFarm(source, { signal, fetch: fetchImpl = globalThis.fetch } = {}) {
-  if (source.kind === "misconfigured") {
-    console.error(source.problem);
+  try {
+    if (source.kind === "misconfigured") {
+      console.error(source.problem);
+      return FAILED.unavailable;
+    }
+    const local = localFarmLoad(source);
+    if (local) return local;
+    return await fetchFarm(source, { signal, fetch: fetchImpl });
+  } catch (err) {
+    console.error(err);
     return FAILED.unavailable;
   }
-  const local = localFarmLoad(source);
-  if (local) return local;
-  return fetchFarm(source, { signal, fetch: fetchImpl });
 }
 
-/**
- * @param {{ kind: "api", url: string, userId: string }} source
- * @param {{ signal?: AbortSignal, fetch: typeof globalThis.fetch }} opts
- * @returns {Promise<FarmLoad>}
- */
 async function fetchFarm(source, { signal, fetch: fetchImpl }) {
-  const timeout = AbortSignal.timeout(LOAD_TIMEOUT_MS);
-  const combined = signal ? AbortSignal.any([signal, timeout]) : timeout;
+  const request = requestSignal(signal, LOAD_TIMEOUT_MS);
   try {
     const res = await fetchImpl(source.url, {
       headers: {
         "X-User-Id": source.userId,
         Accept: "application/json",
       },
-      signal: combined,
+      signal: request.signal,
     });
     if (res.status === 401) return FAILED.unauthorized;
     if (res.status === 404) return FAILED["not-found"];
     if (!res.ok) return FAILED.unavailable;
-    // API yards have real pins. Example section polygons would frame the wrong ground.
     return {
       phase: "ready",
-      farm: { ...parseSnapshot(await res.json()), sections: [] },
+      farm: readyFarmFromParsed(parseSnapshot(await res.json()), {
+        localBasemap: LOCAL_FARM_BASEMAP,
+        sections: [],
+      }),
     };
   } catch (err) {
-    // StrictMode aborts the first mount. That cancel is not a failed load.
-    if (!signal?.aborted) console.error(err);
+    if (signal?.aborted) return LOADING;
+    console.error(err);
     return FAILED.unavailable;
+  } finally {
+    request.clear();
   }
+}
+
+function requestSignal(parent, ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  if (typeof timer.unref === "function") timer.unref();
+  const stop = () => {
+    clearTimeout(timer);
+    if (parent) parent.removeEventListener("abort", onParentAbort);
+  };
+  const onParentAbort = () => {
+    stop();
+    controller.abort();
+  };
+  if (parent?.aborted) onParentAbort();
+  else if (parent) parent.addEventListener("abort", onParentAbort, { once: true });
+  return { signal: controller.signal, clear: stop };
 }
 
 function exampleLoad() {
   if (!cachedExample) {
     cachedExample = {
       phase: "ready",
-      farm: {
-        ...parseSnapshot(example),
+      farm: readyFarmFromParsed(parseSnapshot(example), {
+        localBasemap: LOCAL_FARM_BASEMAP,
         sections: Array.isArray(example.sections) ? example.sections : [],
-      },
+      }),
     };
   }
   return cachedExample;
 }
 
 /**
- * @param {unknown} json
- * @returns {Omit<Farm, "sections">}
+ * Sole writer of `farm.basemap`. Merges a validated still overlay onto local satellite + sample.
+ *
+ * @param {{
+ *   name: string,
+ *   address: string,
+ *   updatedAt: string | null,
+ *   hives: MapHive[],
+ *   offMap: OffMapHive[],
+ *   center?: LatLng,
+ *   bounds?: GeoBounds,
+ *   still: StillOverlay | null,
+ * }} parsed
+ * @param {{ localBasemap: { satellite: object, fallback: object }, sections: Section[] }} options
+ * @returns {Farm}
  */
-function parseSnapshot(json) {
+export function readyFarmFromParsed(parsed, options) {
+  const { localBasemap, sections } = options;
+  const farm = {
+    name: parsed.name,
+    address: parsed.address,
+    updatedAt: parsed.updatedAt,
+    hives: parsed.hives,
+    offMap: parsed.offMap,
+    sections,
+    basemap: composeFarmBasemapWire(localBasemap, parsed.still),
+  };
+  if (parsed.center) farm.center = parsed.center;
+  if (parsed.bounds) farm.bounds = parsed.bounds;
+  return farm;
+}
+
+/**
+ * @param {{ satellite: object, fallback: object }} local
+ * @param {StillOverlay | null} still
+ */
+export function composeFarmBasemapWire(local, still) {
+  const wire = {
+    satellite: local.satellite,
+    fallback: local.fallback,
+  };
+  if (still == null) return wire;
+  return {
+    ...wire,
+    image: still.image,
+    bounds: still.bounds,
+    ...(still.attribution != null ? { attribution: still.attribution } : {}),
+    ...(still.alt != null ? { alt: still.alt } : {}),
+  };
+}
+
+/**
+ * @param {unknown} json
+ */
+export function parseSnapshot(json) {
   if (json == null || typeof json !== "object" || Array.isArray(json)) {
     throw new SnapshotError("snapshot must be an object");
   }
@@ -190,19 +275,112 @@ function parseSnapshot(json) {
     if (parsed.kind === "map") hives.push(parsed.hive);
     else offMap.push(parsed.hive);
   }
+
+  const still = Object.hasOwn(body, "basemap")
+    ? parseStillBasemapOverlay(body.basemap)
+    : null;
+  const center = Object.hasOwn(body, "center") ? parseFarmCenter(body.center) : undefined;
+  const bounds = Object.hasOwn(body, "bounds") ? parseFarmBounds(body.bounds) : undefined;
+
   return {
     name: body.farmName,
     address: body.address,
     updatedAt: body.updatedAt,
     hives,
     offMap,
+    still,
+    ...(center ? { center } : {}),
+    ...(bounds ? { bounds } : {}),
   };
 }
 
 /**
- * @param {unknown} raw
- * @returns {{ kind: "map", hive: MapHive } | { kind: "off", hive: OffMapHive }}
+ * @param {unknown} basemapField
+ * @returns {StillOverlay | null}
  */
+function parseStillBasemapOverlay(basemapField) {
+  if (basemapField == null) return null;
+  if (typeof basemapField !== "object" || Array.isArray(basemapField)) {
+    throw new SnapshotError("basemap must be an object");
+  }
+  const raw = /** @type {Record<string, unknown>} */ (basemapField);
+  if (Object.hasOwn(raw, "still")) {
+    throw new SnapshotError("basemap.still is not a slot. Put the farm picture on basemap.image and basemap.bounds.");
+  }
+  if (Object.hasOwn(raw, "tiles")) {
+    throw new SnapshotError("basemap.tiles is not a slot. Put tiles on basemap.satellite.");
+  }
+
+  const hasImage = Object.hasOwn(raw, "image");
+  const hasBounds = Object.hasOwn(raw, "bounds");
+  if (!hasImage && !hasBounds) return null;
+  if (!hasImage) throw new SnapshotError("basemap.bounds requires basemap.image");
+  if (!hasBounds) throw new SnapshotError("basemap.image requires basemap.bounds");
+  if (typeof raw.image !== "string" || raw.image.length === 0) {
+    throw new SnapshotError("basemap.image must be a non-empty string");
+  }
+
+  /** @type {StillOverlay} */
+  const still = {
+    image: raw.image,
+    bounds: parseGeoBounds(raw.bounds, "basemap.bounds"),
+  };
+  if (raw.attribution != null) {
+    if (typeof raw.attribution !== "string") {
+      throw new SnapshotError("basemap.attribution must be a string");
+    }
+    still.attribution = raw.attribution;
+  }
+  if (raw.alt != null) {
+    if (typeof raw.alt !== "string") throw new SnapshotError("basemap.alt must be a string");
+    still.alt = raw.alt;
+  }
+  return still;
+}
+
+/**
+ * @param {unknown} value
+ * @returns {LatLng}
+ */
+function parseFarmCenter(value) {
+  if (!Array.isArray(value) || value.length !== 2
+    || !value.every((n) => typeof n === "number" && Number.isFinite(n))) {
+    throw new SnapshotError("center must be [lat, lng]");
+  }
+  return [value[0], value[1]];
+}
+
+/**
+ * @param {unknown} value
+ * @returns {GeoBounds}
+ */
+function parseFarmBounds(value) {
+  return parseGeoBounds(value, "bounds");
+}
+
+/**
+ * @param {unknown} bounds
+ * @param {string} label
+ * @returns {GeoBounds}
+ */
+function parseGeoBounds(bounds, label) {
+  if (!Array.isArray(bounds) || bounds.length !== 2) {
+    throw new SnapshotError(`${label} must be [[south, west], [north, east]]`);
+  }
+  const box = bounds.map((pair) => {
+    if (!Array.isArray(pair) || pair.length !== 2
+      || !pair.every((n) => typeof n === "number" && Number.isFinite(n))) {
+      throw new SnapshotError(`${label} must be [[south, west], [north, east]]`);
+    }
+    return /** @type {LatLng} */ ([pair[0], pair[1]]);
+  });
+  const [[south, west], [north, east]] = box;
+  if (south >= north || west >= east) {
+    throw new SnapshotError(`${label} must run south to north and west to east`);
+  }
+  return /** @type {GeoBounds} */ (box);
+}
+
 function parseHive(raw) {
   const record = raw != null && typeof raw === "object" && !Array.isArray(raw)
     ? /** @type {Record<string, unknown>} */ (raw)

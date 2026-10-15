@@ -1,5 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { loadFarm, localFarmLoad, readFarmSource } from "./farmSnapshot.js";
+import {
+  composeFarmBasemapWire,
+  loadFarm,
+  LOCAL_FARM_BASEMAP,
+  localFarmLoad,
+  parseSnapshot,
+  readyFarmFromParsed,
+  readFarmSource,
+} from "./farmSnapshot.js";
+
+const STILL_BOUNDS = [
+  [-25.762684, -49.189889],
+  [-25.761622, -49.188210],
+];
 
 const API = {
   kind: "api",
@@ -9,8 +22,8 @@ const API = {
 
 const HIVE_12 = {
   code: "12",
-  lat: -23.9478,
-  lng: -46.9866,
+  lat: -25.761895097774243,
+  lng: -49.189356741758246,
   status: "stable",
   addedAt: "2025-06-30",
   lastInspection: "2026-10-09",
@@ -76,7 +89,7 @@ describe("readFarmSource", () => {
 });
 
 describe("loadFarm", () => {
-  it("parses the example file into a ready farm with its sections", async () => {
+  it("parses the example file into a ready farm with its sections and still", async () => {
     const source = { kind: "example" };
     const load = await loadFarm(source);
 
@@ -88,10 +101,14 @@ describe("loadFarm", () => {
     expect(load.farm.hives).toHaveLength(21);
     expect(load.farm.offMap).toEqual([]);
     expect(load.farm.sections.map((section) => section.id)).toEqual(["A", "B", "C", "D"]);
+    expect(load.farm.basemap.image).toBe("/assets/farm-basemap.png");
+    expect(load.farm.basemap.bounds).toEqual(STILL_BOUNDS);
+    expect(load.farm.basemap.satellite).toEqual(LOCAL_FARM_BASEMAP.satellite);
+    expect(load.farm.basemap.fallback).toEqual(LOCAL_FARM_BASEMAP.fallback);
     expect(load.farm.hives[0]).toEqual({
       code: "1",
-      lat: -23.947389,
-      lng: -46.986766,
+      lat: -25.761895097774243,
+      lng: -49.189356741758246,
       status: "stable",
       section: "A",
       addedAt: "2024-08-14",
@@ -99,8 +116,8 @@ describe("loadFarm", () => {
     });
     expect(load.farm.hives.find((hive) => hive.code === "3")).toEqual({
       code: "3",
-      lat: -23.947499,
-      lng: -46.986812,
+      lat: -25.761941528616852,
+      lng: -49.18937519230769,
       status: "recovering",
       section: "A",
       addedAt: "2025-02-20",
@@ -159,12 +176,54 @@ describe("loadFarm", () => {
           { code: "14", status: "stable", notes: "manter", missing: "pin" },
         ],
         sections: [],
+        basemap: composeFarmBasemapWire(LOCAL_FARM_BASEMAP, null),
       },
     });
     expect(seen).toEqual({
       url: "https://api.test/v1/meliponarios/10",
       headers: { "X-User-Id": "1", Accept: "application/json" },
     });
+  });
+
+  it("maps optional still, center, and bounds onto the ready farm", async () => {
+    const fetchImpl = async () => jsonResponse(200, {
+      farmName: "Sítio Still",
+      address: "",
+      updatedAt: null,
+      center: [-25.762153, -49.1890495],
+      bounds: STILL_BOUNDS,
+      basemap: {
+        image: "/assets/farm-basemap.png",
+        bounds: STILL_BOUNDS,
+        attribution: "Imagem da propriedade",
+      },
+      hives: [HIVE_12],
+    });
+
+    const load = await loadFarm(API, { fetch: fetchImpl });
+    expect(load.phase).toBe("ready");
+    expect(load.farm.center).toEqual([-25.762153, -49.1890495]);
+    expect(load.farm.bounds).toEqual(STILL_BOUNDS);
+    expect(load.farm.basemap).toEqual(composeFarmBasemapWire(LOCAL_FARM_BASEMAP, {
+      image: "/assets/farm-basemap.png",
+      bounds: STILL_BOUNDS,
+      attribution: "Imagem da propriedade",
+    }));
+  });
+
+  it("rejects a still image without bounds", async () => {
+    const error = silenceErrors();
+    const load = await loadFarm(API, {
+      fetch: async () => jsonResponse(200, {
+        farmName: "Sítio Quebrado",
+        address: "",
+        updatedAt: null,
+        hives: [],
+        basemap: { image: "/assets/farm-basemap.png" },
+      }),
+    });
+    expect(load).toEqual({ phase: "failed", reason: "unavailable" });
+    expect(error.mock.calls[0][0].name).toBe("SnapshotError");
   });
 
   it("treats an empty hive list as a ready yard", async () => {
@@ -184,8 +243,23 @@ describe("loadFarm", () => {
         hives: [],
         offMap: [],
         sections: [],
+        basemap: composeFarmBasemapWire(LOCAL_FARM_BASEMAP, null),
       },
     });
+  });
+
+  it("keeps parseSnapshot still-absent payloads valid", () => {
+    const parsed = parseSnapshot({
+      farmName: "Sem still",
+      address: "",
+      updatedAt: null,
+      hives: [],
+    });
+    expect(parsed.still).toBe(null);
+    expect(readyFarmFromParsed(parsed, {
+      localBasemap: LOCAL_FARM_BASEMAP,
+      sections: [],
+    }).basemap.image).toBeUndefined();
   });
 
   it("returns unauthorized for 401 and not-found for 404", async () => {
