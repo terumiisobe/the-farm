@@ -1,12 +1,13 @@
 # Dashboard shell
 
-The dashboard shell is the always-visible page chrome: the farm name and live summary on the left, and the Bombus product mark on the right, above the hive map.
+The dashboard shell is the slim header above the hive map: farm name on the left and the WhatsApp control on the right. The page fills the viewport and does not scroll.
 
 ## Sub-features
 
 - `shell-farm-name` shows heading `Meliponário Isobe`.
-- `shell-summary` shows setor and colmeia counts from the loaded farm (4 setores · 21 colmeias) plus an `atualizado em` date.
-- `shell-brand` shows the Bombus mark and the line `por Meliponário Isobe`.
+- `shell-whatsapp` shows the compact WhatsApp control in the header.
+- `shell-no-brand` has no Bombus bee image or product wordmark in chrome.
+- `shell-no-scroll` keeps `documentElement.scrollHeight <= clientHeight`.
 
 ## How to get to it (user POV)
 
@@ -17,15 +18,16 @@ The dashboard shell is the always-visible page chrome: the farm name and live su
 Preconditions:
 
 - Bombus is healthy at `CONTROL_APP_BASE_URL`.
-- `control-app doctor` reports farm `Meliponário Isobe` and brand `Bombus`.
+- `control-app doctor` reports farm `Meliponário Isobe`, brand absent, WhatsApp in header, and no page scroll.
 
 - **Open dashboard.** Load the root page. Run `control-app browser goto --path /`. The document title is `Bombus` and an `h1` reads `Meliponário Isobe`.
-- **Read summary.** Confirm the summary line under the heading. Run `control-app browser wait --text "4 setores"` and `control-app browser wait --text "21 colmeias"`. Both strings are visible.
-- **Confirm brand.** Confirm the product mark. Run `control-app browser wait --text "Bombus"` and `control-app browser wait --text "por Meliponário Isobe"`. Both are visible in the header.
-- **Proof.** Capture shell identity. Run `control-app browser snapshot --aria --path "$CONTROL_APP_ARTIFACTS/dashboard-shell/shell.aria.txt"` and `control-app browser screenshot --path "$CONTROL_APP_ARTIFACTS/dashboard-shell/shell.png"`. Artifacts show `Meliponário Isobe`, `Bombus`, and the summary counts.
+- **Confirm no product mark.** Assert the bee and wordmark are gone. Run `control-app browser eval --js "document.querySelectorAll('.product b, img[src*=\"bombus-bee\"]').length"`. Stdout is `0`.
+- **Confirm WhatsApp in header.** Run `control-app browser wait --role link --name "/WhatsApp/"`. The link lives inside `header`.
+- **Confirm no page scroll.** Run `control-app browser eval --js "({sh:document.documentElement.scrollHeight,ch:document.documentElement.clientHeight})"`. `sh` is not greater than `ch`.
+- **Proof.** Capture shell identity. Run `control-app browser snapshot --aria --path "$CONTROL_APP_ARTIFACTS/dashboard-shell/shell.aria.txt"` and `control-app browser screenshot --path "$CONTROL_APP_ARTIFACTS/dashboard-shell/shell.png"`. Artifacts show `Meliponário Isobe` and the header WhatsApp control, with no Bombus product block.
 
 ## Gotchas
 
 - Before `App` finishes loading sample data the root renders nothing (`null`). Wait for `h1`, not only `#root`.
-- The logo `<img>` has an empty `alt`; assert the adjacent `Bombus` text, not the image name.
-- Summary counts come from sample JSON. If a change swaps the data source, update expected counts here rather than weakening the journey.
+- Do not expect setores/colmeias/atualizado in the header. Hive counts live in the map legend.
+- Document title may still say `Bombus`; that is not on-screen chrome.

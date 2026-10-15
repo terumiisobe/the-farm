@@ -7,7 +7,7 @@ description: "Prove Bombus dashboard UI changes by launching the Vite app, drivi
 
 Drive the **Bombus** React 18 + Vite farm dashboard the way a user does: launch the real app, exercise mapped features, capture proof. Read this cold mid-task — do not invent alternate ports, fixtures, or selectors.
 
-Desktop-first. Single screen: farm name, Bombus mark, view-only hive map, WhatsApp bot link. Sample data from `src/data/example-farm.json` (4 setores, 21 colmeias).
+Desktop-first. Single screen: slim farm-name header with WhatsApp, view-only hive map filling the rest of the viewport (no page scroll). Sample data from `src/data/example-farm.json` (4 setores, 21 colmeias).
 
 ## Launch
 
@@ -18,13 +18,13 @@ export CONTROL_APP_RUN_ID="${CONTROL_APP_RUN_ID:-$(date +%s)}"
 export CONTROL_APP_PORT="${CONTROL_APP_PORT:-5173}"
 export PATH="$PWD/.cursor/skills/control-app/scripts:$PATH"
 
-control-app launch          # prints http://127.0.0.1:$PORT
-control-app doctor          # must OK before any drive
+control-app launch
+control-app doctor
 ```
 
 - Installs app deps (`npm install` at repo root) and harness deps (skill-local `playwright-core`) if missing.
-- Starts `npx vite --host 127.0.0.1 --port $CONTROL_APP_PORT --strictPort`.
-- Ready means `/` returns HTML with `#root` **and** `doctor` sees heading `Meliponário Isobe`, brand `Bombus`, the map, and the WhatsApp link — not merely that a port answers.
+- Starts Vite via the skill script (`node node_modules/vite/bin/vite.js --host 127.0.0.1 --port $CONTROL_APP_PORT --strictPort`) so cleanup can stop the recorded pid without orphaning an npm wrapper.
+- Ready means `/` returns HTML with `#root` **and** `doctor` sees heading `Meliponário Isobe`, no Bombus product mark, the map, WhatsApp in the header, and no page scroll — not merely that a port answers.
 - State lives under `/tmp/control-app-$CONTROL_APP_RUN_ID/` (pid, log, URL). Never drive an instance you did not launch for this run.
 - Isolation: pick a free `CONTROL_APP_PORT` per concurrent run. `--strictPort` refuses to steal another process's port. This app has no server-side data dir; sample farm JSON is bundled.
 - Teardown: `control-app cleanup` (see Cleanup).
@@ -40,7 +40,7 @@ Read-only. Passes only when:
 1. State file exists and its `pid` is alive.
 2. `CONTROL_APP_BASE_URL` matches the launched URL.
 3. System Chrome is available (`CONTROL_APP_CHROME_BIN`).
-4. A headless browser load shows farm heading **Meliponário Isobe**, product mark **Bombus**, `role=application` map matching `/Mapa das colmeias/`, and a WhatsApp link.
+4. A headless browser load shows farm heading **Meliponário Isobe**, no `.product b` Bombus mark, `role=application` map matching `/Mapa das colmeias/`, a WhatsApp link inside `header`, and `scrollHeight <= clientHeight` on `documentElement`.
 
 Run doctor first whenever anything looks off, and again after a failed drive before retrying.
 
@@ -51,13 +51,13 @@ Harness: Playwright Core against system Chrome via `control-app browser …`. Pr
 | Surface | Stable handle |
 | --- | --- |
 | Farm name | `h1` text `Meliponário Isobe` |
-| Brand | `.product b` → `Bombus` (visible identity; alt on logo is empty) |
-| Hive map | `role=application` name `/Mapa das colmeias/` |
+| Brand | absent from chrome (no `.product b`, no bee image) |
+| Hive map | `role=application` name `/Mapa das colmeias/` (aria default; legend title may be omitted) |
 | Zoom in / out / fit | buttons `Aproximar`, `Afastar`, `Enquadrar todas as colmeias` |
 | Hive marker | button name `/Colmeia <code>, <status label>/` e.g. `Colmeia 1, Estável` |
 | Hive details | `role=region` (section) `Detalhes da colmeia <code>`; close `Fechar detalhes` |
 | Legend chip | button with status label (`Estável`, `Desenvolvendo`, …), `aria-pressed` |
-| WhatsApp | link name `/WhatsApp/` → `https://wa.me/` (placeholder in `src/App.jsx`) |
+| WhatsApp | `header` link name `/WhatsApp/` → `https://wa.me/` (placeholder in `src/App.jsx`) |
 
 ```bash
 control-app browser goto --path /
@@ -87,7 +87,7 @@ Override with `CONTROL_APP_ARTIFACTS` if needed. Proof standards:
 
 - Exercise the real UI path (click markers / zoom / link), not React internals or test-only hooks.
 - Capture **action + resulting state** (e.g. marker click **and** details panel), not only the final screen.
-- Include an ARIA snapshot and a screenshot where farm name + Bombus identity are visible.
+- Include an ARIA snapshot and a screenshot where the farm name and header WhatsApp control are visible, with no Bombus product chrome.
 - Record feature ID and entry point with every artifact (subdir named after the feature file stem).
 - Side effects: this dashboard is view-only besides opening WhatsApp in a new tab — verify `href` and `target=_blank` rather than completing an external chat.
 - Video (optional but preferred for UI PRs): record the drive with the agent's screen recorder while the headed browser or desktop shows `CONTROL_APP_BASE_URL`.
@@ -113,8 +113,8 @@ Executable entrypoint:
 Put it on `PATH` as shown in Launch, or invoke by absolute path. Skill-local Node deps install into `.cursor/skills/control-app/node_modules` (harness only — not a product dependency). Requires system Chrome (`google-chrome` / `chromium`).
 
 ```bash
-control-app env                 # resolved configuration
-control-app browser help        # drive actions
+control-app env
+control-app browser help
 ```
 
 ## Maintenance

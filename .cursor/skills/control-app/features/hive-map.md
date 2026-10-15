@@ -25,7 +25,7 @@ Preconditions:
 - Sample farm includes hive `1` with status Estável.
 - `control-app doctor` reports the map present.
 
-- **See the map.** Load the root page. Run `control-app browser goto --path /` and `control-app browser wait --role application --name "/Mapa das colmeias/"`. The map application is visible; the legend shows `Mapa das colmeias` and `21 colmeias`.
+- **See the map.** Load the root page. Run `control-app browser goto --path /` and `control-app browser wait --role application --name "/Mapa das colmeias/"`. The map application is visible and fills the space under the header. The legend shows the hive count (`21 colmeias`); it may omit a legend title.
 - **Select a hive.** Choose hive 1. Run `control-app browser click --role button --name "/Colmeia 1, Estável/"`. A region named `Detalhes da colmeia 1` appears with status `Estável`.
 - **Close details.** Dismiss the panel. Run `control-app browser click --role button --name "Fechar detalhes"`. The details region is gone.
 - **Zoom.** Focus map controls. Run `control-app browser click --role button --name "Aproximar"`, then `control-app browser click --role button --name "Afastar"`, then `control-app browser click --role button --name "Enquadrar todas as colmeias"`. Each control remains reachable; the map application stays visible.

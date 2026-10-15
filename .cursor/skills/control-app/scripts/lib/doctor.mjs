@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-/**
- * Read-only health check: is this control-app instance worth driving?
- */
 import fs from "node:fs";
 import { chromium } from "playwright-core";
 
@@ -59,25 +56,39 @@ try {
   await page.waitForSelector("h1", { timeout: 15000 });
 
   const farm = (await page.locator("h1").first().innerText()).trim();
-  const brand = await page.locator(".product b").first().innerText().catch(() => "");
+  const brandCount = await page.locator(".product b").count();
   const map = page.getByRole("application", { name: /Mapa das colmeias/i });
   const mapCount = await map.count();
-  const bot = page.getByRole("link", { name: /WhatsApp/i });
+  const bot = page.locator("header").getByRole("link", { name: /WhatsApp/i });
   const botCount = await bot.count();
+  const scroll = await page.evaluate(() => ({
+    sh: document.documentElement.scrollHeight,
+    ch: document.documentElement.clientHeight,
+  }));
 
   if (farm !== "Meliponário Isobe") fail(`expected farm heading Meliponário Isobe, got ${JSON.stringify(farm)}`);
-  if (brand !== "Bombus") fail(`expected Bombus brand mark, got ${JSON.stringify(brand)}`);
+  if (brandCount > 0) fail("Bombus product mark still present in dashboard chrome");
   if (mapCount < 1) fail("hive map (role=application) not found");
-  if (botCount < 1) fail("WhatsApp BotLink not found");
+  if (botCount < 1) fail("WhatsApp BotLink not found in header");
+  if (scroll.sh > scroll.ch + 1) fail(`page scrolls (scrollHeight ${scroll.sh} > clientHeight ${scroll.ch})`);
+
+  let portOwner = "unknown";
+  try {
+    const { execSync } = await import("node:child_process");
+    const out = execSync(`ss -ltnp 'sport = :${state.port}' 2>/dev/null || true`, { encoding: "utf8" });
+    portOwner = out.includes(String(state.pid)) ? `pid ${state.pid}` : out.trim().slice(0, 200) || "unconfirmed";
+  } catch {}
 
   ok([
     `runId=${runId}`,
     `pid=${state.pid}`,
     `url=${baseUrl}`,
+    `portOwner=${portOwner}`,
     `farm=${farm}`,
-    `brand=${brand}`,
+    `brand=absent`,
     `map=present`,
-    `botLink=present`,
+    `botLink=header`,
+    `pageScroll=false`,
     `chrome=${chromeBin}`,
   ]);
 } finally {

@@ -8,7 +8,7 @@ This directory is the maintained source for verifying user-facing behavior of th
 - Set a unique `CONTROL_APP_RUN_ID` (and free `CONTROL_APP_PORT`) when another verification run may be active.
 - Sample farm data is the bundled `src/data/example-farm.json` (4 setores, 21 colmeias). No separate seed step.
 - Put `.cursor/skills/control-app/scripts` on `PATH`.
-- Run `control-app doctor` and require farm heading `Meliponário Isobe`, brand `Bombus`, map present, WhatsApp link present.
+- Run `control-app doctor` and require farm heading `Meliponário Isobe`, brand absent, map present, WhatsApp in the header, and no page scroll.
 - Never drive an instance that was not started by this verification run.
 - Viewport for proof: desktop width ≥ 1280 (harness default 1440×900).
 
@@ -24,7 +24,7 @@ This directory is the maintained source for verifying user-facing behavior of th
 ## Proof and skip reporting
 
 - Capture the user action and the resulting state, not only the final screen.
-- UI proof includes an ARIA snapshot and a screenshot with farm name and Bombus identity visible.
+- UI proof includes an ARIA snapshot and a screenshot with farm name and header WhatsApp visible (no Bombus product chrome).
 - Record the feature ID and entry point used with every artifact (use a subdirectory named after the feature file stem).
 - Report an unreachable path with the attempted command and the unmet precondition.
 - Do not report a skipped entry point as verified through a different path.
