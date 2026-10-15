@@ -79,6 +79,7 @@ function parseSatellite(slot) {
   if (slot.minZoom != null && (typeof slot.minZoom !== "number" || !Number.isFinite(slot.minZoom))) {
     throw new Error("basemap.satellite.minZoom must be a number");
   }
+  // EOX licence text has to name the same mosaic year as the s2cloudless URL.
   const urlYear = /s2cloudless-(\d{4})/.exec(tiles);
   if (urlYear) {
     const attrYear = /Sentinel data (\d{4})/.exec(slot.attribution);
