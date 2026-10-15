@@ -59,6 +59,23 @@ describe("Dashboard", () => {
     expect(style.minHeight).toBe("44px");
   });
 
+  it("keeps an empty basemap status before the map until a failure line is set", () => {
+    const { rerender, container } = render(<Dashboard {...farm} />);
+    const status = screen.getByRole("status");
+    const map = container.querySelector(".bb-map");
+    const failure = "Satélite ao vivo indisponível. Mostrando a imagem salva da propriedade.";
+
+    expect(status.textContent).toBe("");
+    expect(map.previousElementSibling).toBe(status);
+    expect(map.nextElementSibling).toBeNull();
+
+    rerender(<Dashboard {...farm} basemapStatus={failure} />);
+
+    expect(screen.getByRole("status")).toBe(status);
+    expect(status.textContent).toBe(failure);
+    expect(container.querySelector(".bb-map").nextElementSibling).toBeNull();
+  });
+
   it("hides page scroll on the dashboard shell", () => {
     const { container } = render(<Dashboard {...farm} />);
     const page = container.querySelector(".page");
