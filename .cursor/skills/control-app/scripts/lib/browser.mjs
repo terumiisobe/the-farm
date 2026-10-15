@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+/**
+ * Browser drive client for the Bombus dashboard.
+ * Talks to browser-daemon.mjs so React UI state survives across commands.
+ */
 import fs from "node:fs";
 import path from "node:path";
 import net from "node:net";
@@ -83,7 +87,7 @@ async function sleep(ms) {
 async function startDaemon() {
   if (!process.env.CONTROL_APP_CHROME_BIN) throw new Error("CONTROL_APP_CHROME_BIN unset");
   fs.mkdirSync(stateDir, { recursive: true });
-  try { fs.unlinkSync(sockPath); } catch {}
+  try { fs.unlinkSync(sockPath); } catch { /* ignore */ }
 
   const child = spawn(process.execPath, [daemonJs], {
     env: process.env,
@@ -133,18 +137,18 @@ async function ensureDaemon() {
 
 async function stopDaemon() {
   if (fs.existsSync(sockPath)) {
-    try { await rpc({ action: "stop" }); } catch {}
+    try { await rpc({ action: "stop" }); } catch { /* ignore */ }
     await sleep(200);
   }
   let pid;
   try {
     pid = JSON.parse(fs.readFileSync(metaPath, "utf8")).pid;
-  } catch {}
+  } catch { /* ignore */ }
   if (pid) {
-    try { process.kill(pid, "TERM"); } catch {}
+    try { process.kill(pid, "TERM"); } catch { /* ignore */ }
   }
-  try { fs.unlinkSync(metaPath); } catch {}
-  try { fs.unlinkSync(sockPath); } catch {}
+  try { fs.unlinkSync(metaPath); } catch { /* ignore */ }
+  try { fs.unlinkSync(sockPath); } catch { /* ignore */ }
   console.log("browser stopped");
 }
 

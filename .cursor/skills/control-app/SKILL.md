@@ -23,7 +23,7 @@ control-app doctor
 ```
 
 - Installs app deps (`npm install` at repo root) and harness deps (skill-local `playwright-core`) if missing.
-- Starts `npx vite --host 127.0.0.1 --port $CONTROL_APP_PORT --strictPort`.
+- Starts Vite via the skill script (`node node_modules/vite/bin/vite.js --host 127.0.0.1 --port $CONTROL_APP_PORT --strictPort`) so cleanup can stop the recorded pid without orphaning an npm wrapper.
 - Ready means `/` returns HTML with `#root` **and** `doctor` sees heading `Meliponário Isobe`, no Bombus product mark, the map, WhatsApp in the header, and no page scroll — not merely that a port answers.
 - State lives under `/tmp/control-app-$CONTROL_APP_RUN_ID/` (pid, log, URL). Never drive an instance you did not launch for this run.
 - Isolation: pick a free `CONTROL_APP_PORT` per concurrent run. `--strictPort` refuses to steal another process's port. This app has no server-side data dir; sample farm JSON is bundled.
@@ -68,6 +68,8 @@ control-app browser snapshot --aria --path "$CONTROL_APP_ARTIFACTS/hive-map/sele
 ```
 
 Browser commands share one long-lived daemon page per `CONTROL_APP_RUN_ID` (Unix socket under the run state dir), so selection/zoom/legend state carries across steps. `control-app cleanup` and `control-app browser stop` tear that daemon down.
+
+For on-screen / video proof, set `CONTROL_APP_HEADED=1` before the first `control-app browser …` command so the daemon opens a visible Chrome window (default is headless).
 
 Never open the WhatsApp URL in a way that depends on an external account. Assert `href` with `control-app browser href --role link --name "/WhatsApp/"`.
 
