@@ -1,18 +1,25 @@
 {
  "basemap": {
-  "image": "/assets/farm-basemap.jpg",
-  "bounds": [
-   [
-    -23.949258,
-    -46.988093
+  "satellite": {
+   "tiles": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg",
+   "maxZoom": 18,
+   "attribution": "EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2025)"
+  },
+  "fallback": {
+   "image": "/assets/farm-basemap.jpg",
+   "bounds": [
+    [
+     -23.949258,
+     -46.988093
+    ],
+    [
+     -23.946742,
+     -46.983907
+    ]
    ],
-   [
-    -23.946742,
-    -46.983907
-   ]
-  ],
-  "attribution": "Imagem de satélite: exemplo · coordenadas ilustrativas",
-  "alt": "Imagem de satélite da propriedade"
+   "attribution": "Imagem de satélite: exemplo · coordenadas ilustrativas",
+   "alt": "Imagem de satélite da propriedade"
+  }
  },
  "sections": [
   {
@@ -303,5 +310,5 @@
    "notes": "Vendida em 15/09/2026."
   }
  ],
- "_note": "EXAMPLE DATA. Coordinates are placeholders: replace basemap.bounds with the real corners of your farm image and each hive's lat/lng with GPS readings. Replace hives with what your backend returns."
+ "_note": "EXAMPLE DATA. Coordinates are placeholders. Replace basemap.fallback.bounds with the real corners of your farm image and each hive's lat/lng with GPS readings. Replace hives with what your backend returns."
 }
