@@ -1,14 +1,15 @@
 # Bombus — starter
 
 A ready-to-run React 18 + Vite app with the Bombus design system wired in: the
-dashboard (farm name, Bombus mark, view-only hive map, WhatsApp link) on sample data.
+dashboard (farm name from the API, view-only hive map, WhatsApp link).
 
 ## Run it
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm run build      # production files in dist/
+cp .env.example .env.local   # set the real API origin, meliponário id, and user id
+npm run dev                  # http://localhost:5173 — requires the three Vite env vars
+npm run build                # production files in dist/
 ```
 
 ## What's where
@@ -23,14 +24,13 @@ src/
     bombus.d.ts        props of every component (documentation)
     fonts/             Outfit, Atkinson Hyperlegible, JetBrains Mono
   data/
-    example-farm.json  sample farm with operator still + bounds, EOX fallback, 4 sections, 21 hives
-    mock-still-farm.json  harness still (same operator still box)
-    mock-eox-farm.json   no still: EOX path for harness (`/?farm=eox`)
+    example-farm.json  test fixture: operator still + bounds, EOX fallback, sections, hives
+    farmSnapshot.js    reads the Vite env and GET /v1/meliponarios/{id}
     resolveBasemap.js  picks the farm still, EOX tiles, or the sample image
     resolveFarmView.js chooses where the camera looks from hive GPS, farm centre, or a still box
     statusMap.js       turns your backend's hives into what the map expects
-  Dashboard.jsx        the app's single screen
-  App.jsx              loads the data — swap the example for your API here
+  Dashboard.jsx        the app's single screen (loading / ready / failed)
+  App.jsx              loads the farm snapshot and selects the basemap
   app.css              page layout (tokens only)
 public/assets/         logo (transparent), hive-box icon, farm satellite image
 ```
@@ -46,25 +46,37 @@ spacing are CSS variables: `color: var(--ink); background: var(--surface); paddi
 
 ## Connect your data
 
-Each hive needs (see `src/data/statusMap.js` → `toHive`, adjust the field names to your API):
+The map reads one farm snapshot from `GET /v1/meliponarios/{id}`. Copy `.env.example` to `.env.local` and set all three vars before `npm run dev`. There is no bundled mock farm for `/`. Missing or blank `VITE_API_BASE_URL` shows a load error.
+
+```bash
+VITE_API_BASE_URL=https://api.example
+VITE_MELIPONARIO_ID=10
+VITE_USER_ID=1
+```
+
+`VITE_API_BASE_URL` is the origin, with no trailing slash. `VITE_MELIPONARIO_ID` is the id in `GET /v1/meliponarios/{id}`. `VITE_USER_ID` is sent as the `X-User-Id` header. If either id is missing or not digits, the page shows a load error.
+
+The response supplies the farm name, the address, a freshness time, and the hives. Optional `center`, `bounds`, and `basemap.image` + `basemap.bounds` (plus attribution) carry place and the farm still. When the API omits a still, the app paints the local operator still (`/assets/farm-basemap.png` with SW/NE `[[-25.762684, -49.189889], [-25.761622, -49.188210]]`) and keeps local EOX `satellite` / sample `fallback`. An API farm draws no section polygons. WhatsApp stays the local constant.
+
+Each hive uses these fields:
 
 | field | example | shown as |
 | --- | --- | --- |
 | `code` | `"12"` | the number on the map — numbers only, no section prefix |
-| `lat`, `lng` | `-23.9478, -46.9866` | position (WGS84 decimal degrees) |
+| `lat`, `lng` | `-25.76215, -49.18905` | position (WGS84 decimal degrees) |
 | `status` | `stable` · `developing` · `recovering` · `lost` · `sold` | Estável · Desenvolvendo · Recuperando · Perdida · Vendida |
 | `section` | `"B"` | which "Setor" outline it belongs to (optional) |
 | `addedAt` | `"2025-06-30"` | Adicionada em |
 | `lastInspection` | `"2026-10-09"` | Última revisão em (+ "há N dias") |
 | `notes` | `"Trocar o fundo."` | Notas |
 
-Portuguese status words from the backend (`estavel`, `perdida`…) are mapped by `toStatusKey`.
+Portuguese status words (`estavel`, `perdida`, and the rest) still map through `toStatusKey`. A missing status stays `unknown`.
 
 ## Basemap
 
-The map paints one basemap. A farm still wins when the payload includes `basemap.image` and `basemap.bounds` and that image loads. Free EOX Sentinel-2 Cloudless 2025 tiles are the fallback when the still is absent or fails before it decodes. The `fallback` image is the offline sample, and it is also the paint after every live tile has failed. No account and no API key.
+The map paints one basemap. A farm still wins when the payload includes `basemap.image` and `basemap.bounds` and that image loads, or when the local operator still is composed in because the GET omitted a picture. Free EOX Sentinel-2 Cloudless 2025 tiles are the fallback when the still fails before it decodes. The `fallback` image is the offline sample, and it is also the paint after every live tile has failed. No account and no API key.
 
-`src/data/example-farm.json` is the default offline farm. It includes top-level `basemap.image` (`/assets/farm-basemap.png`) and operator SW/NE bounds `[[-25.762684, -49.189889], [-25.761622, -49.188210]]`, so `/` paints the still. EOX stays on `basemap.satellite` as fallback. Open `/?farm=eox` for the no-still path. Both files keep an empty `address`. The browser does not geocode `address`. Do not commit a street, a house number, or a private geocode.
+Local still defaults use `/assets/farm-basemap.png` with operator SW/NE `[[-25.762684, -49.189889], [-25.761622, -49.188210]]`. EOX stays on `basemap.satellite` as fallback. `src/data/example-farm.json` is a **test fixture only** (same still box). The browser does not geocode `address`. Do not commit a street, a house number, or a private geocode.
 
 ```json
 "basemap": {

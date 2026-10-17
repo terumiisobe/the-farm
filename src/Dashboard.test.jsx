@@ -6,23 +6,37 @@ import "./app.css";
 const WHATSAPP_URL = "https://wa.me/5511999999999";
 const NEW_TAB_NAME = "WhatsApp (abre o WhatsApp em uma nova aba)";
 
-const farm = {
-  farmName: "Meliponário Isobe",
-  hives: [{ code: "12", lat: -23.55, lng: -46.63, status: "stable" }],
-  sections: [
-    {
-      id: "A",
-      name: "Norte",
-      polygon: [
-        [-23.55, -46.64],
-        [-23.54, -46.64],
-        [-23.54, -46.62],
-      ],
+const sections = [
+  {
+    id: "A",
+    name: "Norte",
+    polygon: [
+      [-23.55, -46.64],
+      [-23.54, -46.64],
+      [-23.54, -46.62],
+    ],
+  },
+];
+
+function readyView(basemapStatus = null) {
+  return {
+    phase: "ready",
+    farm: {
+      name: "Meliponário Isobe",
+      address: "",
+      updatedAt: null,
+      hives: [{ code: "12", lat: -23.55, lng: -46.63, status: "stable" }],
+      offMap: [],
+      sections,
     },
-  ],
-  basemap: { attribution: "Imagem de satélite: exemplo" },
-  whatsappUrl: WHATSAPP_URL,
-};
+    basemap: { attribution: "Imagem de satélite: exemplo" },
+    basemapStatus,
+  };
+}
+
+function show(view = readyView()) {
+  return render(<Dashboard view={view} whatsappUrl={WHATSAPP_URL} onRetry={() => {}} />);
+}
 
 afterEach(() => {
   cleanup();
@@ -30,7 +44,7 @@ afterEach(() => {
 
 describe("Dashboard", () => {
   it("shows the farm name and one header WhatsApp link on a fluid map", () => {
-    const { container } = render(<Dashboard {...farm} />);
+    const { container } = show();
     const header = screen.getByRole("banner");
 
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Meliponário Isobe");
@@ -48,7 +62,7 @@ describe("Dashboard", () => {
   });
 
   it("names the WhatsApp control as a new tab and keeps a 44 by 44 hit target", () => {
-    render(<Dashboard {...farm} />);
+    show();
     const link = screen.getByRole("link", { name: NEW_TAB_NAME });
 
     expect(link.getAttribute("href")).toBe(WHATSAPP_URL);
@@ -60,17 +74,17 @@ describe("Dashboard", () => {
   });
 
   it("keeps an empty basemap status before the map until a failure line is set", () => {
-    const { rerender, container } = render(<Dashboard {...farm} />);
+    const failure = "Satélite ao vivo indisponível. Mostrando a imagem salva da propriedade.";
+    const { rerender, container } = show();
     const status = screen.getByRole("status");
     const map = container.querySelector(".bb-map");
-    const failure = "Satélite ao vivo indisponível. Mostrando a imagem salva da propriedade.";
 
     expect(status.textContent).toBe("");
     expect(map.previousElementSibling).toBe(status);
     expect(map.nextElementSibling).toBeNull();
     expect(container.querySelector(".map-build")).toBeNull();
 
-    rerender(<Dashboard {...farm} basemapStatus={failure} />);
+    rerender(<Dashboard view={readyView(failure)} whatsappUrl={WHATSAPP_URL} onRetry={() => {}} />);
 
     expect(screen.getByRole("status")).toBe(status);
     expect(status.textContent).toBe(failure);
@@ -78,7 +92,7 @@ describe("Dashboard", () => {
   });
 
   it("uses a dark green letterbox behind the map surface", () => {
-    const { container } = render(<Dashboard {...farm} />);
+    const { container } = show();
     const stage = container.querySelector(".map-stage");
     const map = container.querySelector(".bb-map");
 
@@ -87,7 +101,7 @@ describe("Dashboard", () => {
   });
 
   it("hides page scroll on the dashboard shell", () => {
-    const { container } = render(<Dashboard {...farm} />);
+    const { container } = show();
     const page = container.querySelector(".page");
 
     expect(getComputedStyle(page).overflow).toBe("hidden");
