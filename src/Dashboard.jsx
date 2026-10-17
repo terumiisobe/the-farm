@@ -1,7 +1,7 @@
 import { HiveMap, BotLink } from "./bombus";
 
 /** Bump when the operator still tip on sat-2 changes so `npm run dev` shows a new stamp. */
-export const STILL_BUILD = "still-v3";
+export const STILL_BUILD = "still-v4";
 
 export default function Dashboard({
   farmName,

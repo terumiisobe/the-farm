@@ -45,7 +45,7 @@ describe("Dashboard", () => {
     expect(map.style.height).toBe("100%");
     expect(map.parentElement.contains(links[0])).toBe(false);
     expect(container.querySelector(".map-build").textContent).toBe(STILL_BUILD);
-    expect(STILL_BUILD).toBe("still-v3");
+    expect(STILL_BUILD).toBe("still-v4");
   });
 
   it("names the WhatsApp control as a new tab and keeps a 44 by 44 hit target", () => {

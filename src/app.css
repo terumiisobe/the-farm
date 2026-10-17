@@ -96,20 +96,22 @@ body {
 
 .map-build {
   position: absolute;
-  z-index: 2;
+  z-index: 100;
   left: 50%;
-  bottom: var(--space-3);
+  bottom: 40px;
   transform: translateX(-50%);
   margin: 0;
-  padding: 6px 14px;
+  padding: 8px 16px;
   pointer-events: none;
   border-radius: 4px;
-  background: rgba(0, 0, 0, .78);
+  border: 2px solid #fdf8e1;
+  background: #1a1208;
   color: #fdf8e1;
   font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
-  font-size: 16px;
-  line-height: 20px;
+  font-size: 18px;
+  line-height: 22px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .55);
 }
