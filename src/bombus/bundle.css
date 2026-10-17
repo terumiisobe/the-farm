@@ -99,7 +99,7 @@
 .bb-map {
   position: relative; overflow: hidden; isolation: isolate;
   border-radius: var(--radius-lg); border: var(--stroke-hairline) solid var(--ink);
-  background: var(--cocoa); font-family: var(--font-sans); color: var(--ink);
+  background: #121f18; font-family: var(--font-sans); color: var(--ink);
   user-select: none; -webkit-user-select: none;
 }
 .bb-map__surface { position: absolute; inset: 0; overflow: hidden; touch-action: none; cursor: grab; outline: none; }
