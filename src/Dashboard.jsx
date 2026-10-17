@@ -8,6 +8,7 @@ export default function Dashboard({
   basemapStatus,
   whatsappUrl,
   maxZoom,
+  minZoom,
   center,
   zoom,
   mapKey,
@@ -27,6 +28,7 @@ export default function Dashboard({
           basemap={basemap}
           height="100%"
           maxZoom={maxZoom}
+          minZoom={minZoom}
           center={center}
           zoom={zoom}
         />

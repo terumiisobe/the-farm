@@ -3,13 +3,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import App, { probeTile } from "./App.jsx";
 
 const PROBE_URL = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37260/24214.jpg";
-const PRELOAD_URLS = [
-  PROBE_URL,
-  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37260/24215.jpg",
-  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37260/24213.jpg",
-  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37261/24214.jpg",
-  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37259/24214.jpg",
-];
 const STATUS_IMAGE = "Satélite ao vivo indisponível. Mostrando a imagem salva da propriedade.";
 const STATUS_SOFT = "Não foi possível confirmar o satélite. Mantendo o mapa ao vivo.";
 const STATUS_LIMITED_TILES = "Sem imagem da propriedade. Mostrando satélite com detalhe limitado.";
@@ -228,7 +221,7 @@ describe("App", () => {
     globalThis.Image = FakeImage;
     try {
       const { container } = render(<App />);
-      expect(images.map((img) => img.src)).toEqual([PROBE_URL, ...PRELOAD_URLS]);
+      expect(images.map((img) => img.src)).toEqual([PROBE_URL]);
       expect(screen.getByRole("status").textContent).toBe(STATUS_LIMITED_TILES);
 
       act(() => {
@@ -237,7 +230,7 @@ describe("App", () => {
 
       expect(screen.getByRole("status").textContent).toBe(STATUS_SOFT);
       expect(container.querySelector(".bb-map__image")).toBeNull();
-      expect(images.map((img) => img.src)).toEqual([PROBE_URL, ...PRELOAD_URLS]);
+      expect(images.map((img) => img.src)).toEqual([PROBE_URL]);
     } finally {
       globalThis.Image = realImage;
     }

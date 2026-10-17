@@ -3,16 +3,20 @@ import { pinLatLng } from "./statusMap.js";
 
 const CALM_MIN_ZOOM = 15;
 const CALM_MAX_ZOOM = 16;
+/** Camera floor under EOX maxZoom 18 so +/− has room when hive fit would otherwise sit at ~17.5–18. */
+const SATELLITE_CAMERA_MIN_ZOOM = 14;
 const MIN_SPAN_M = 500;
 const METERS_PER_DEGREE = 111320;
 
 /**
- * Where HiveMap should look. Hive pins omit centre and zoom so the map fits them.
- * Farm `center` and `bounds` beat a still or sample box. Satellite paint has no bounds to read.
+ * Where HiveMap should look. Still/sample hive pins omit centre and zoom so the map fits them.
+ * On satellite, hive pins get a calm centre/zoom and an explicit minZoom so the camera is not
+ * jammed against maxZoom. Farm `center` and `bounds` beat a still or sample box. Satellite paint
+ * has no bounds to read.
  *
  * @param {unknown} farm
  * @param {object} selection
- * @returns {{ maxZoom?: number, source: "hives" | "center" | "bounds" | "still" | "placeholder", center?: [number, number], zoom?: number }}
+ * @returns {{ maxZoom?: number, minZoom?: number, source: "hives" | "center" | "bounds" | "still" | "placeholder", center?: [number, number], zoom?: number }}
  */
 export function resolveFarmView(farm, selection) {
   if (!isBasemapSelection(selection)) {
@@ -20,7 +24,16 @@ export function resolveFarmView(farm, selection) {
   }
   const record = farm && typeof farm === "object" ? farm : {};
   const maxZoom = selection.kind === "satellite" ? selection.paint.maxZoom : null;
-  if (hivePins(record).length > 0) return pack(maxZoom, { source: "hives" });
+  const pins = hivePins(record);
+  if (pins.length > 0) {
+    if (maxZoom == null) return pack(maxZoom, { source: "hives" });
+    const pinBox = boundsOfPins(pins);
+    return pack(maxZoom, {
+      source: "hives",
+      center: midpoint(pinBox),
+      zoom: zoomForBounds(pinBox, maxZoom),
+    });
+  }
 
   const center = pair(record.center);
   const bounds = box(record.bounds);
@@ -83,7 +96,12 @@ function midpoint(bounds) {
 }
 
 function pack(maxZoom, fields) {
-  return maxZoom == null ? fields : { maxZoom, ...fields };
+  if (maxZoom == null) return fields;
+  return { maxZoom, minZoom: satelliteCameraMin(maxZoom), ...fields };
+}
+
+function satelliteCameraMin(maxZoom) {
+  return Math.min(SATELLITE_CAMERA_MIN_ZOOM, Math.max(0, maxZoom - 3));
 }
 
 function hivePins(farm) {
@@ -94,6 +112,20 @@ function hivePins(farm) {
     if (pin) pins.push(pin);
   }
   return pins;
+}
+
+function boundsOfPins(pins) {
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+  let minLng = Infinity;
+  let maxLng = -Infinity;
+  for (const [lat, lng] of pins) {
+    if (lat < minLat) minLat = lat;
+    if (lat > maxLat) maxLat = lat;
+    if (lng < minLng) minLng = lng;
+    if (lng > maxLng) maxLng = lng;
+  }
+  return [[minLat, minLng], [maxLat, maxLng]];
 }
 
 function pair(value) {

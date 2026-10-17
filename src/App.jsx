@@ -14,6 +14,8 @@ import { pinLatLng, toHive } from "./data/statusMap.js";
 // Replace with the bot's real number, e.g. "https://wa.me/5511999999999".
 const WHATSAPP_URL = "https://wa.me/";
 const PROBE_TIMEOUT_MS = 8000;
+/** Neighbour preload floods Network while debugging zoom; viewport tiles + one probe are enough. */
+const PRELOAD_NEIGHBOUR_TILES = false;
 
 function bundledFarm(search) {
   const name = new URLSearchParams(search).get("farm");
@@ -59,7 +61,9 @@ export default function App() {
   const satelliteLive = selection != null && selection.kind === "satellite" && latch.tiles !== "failed";
   // A soft latch rebuilds the selection. The URL string stays put, so the probe does not start again.
   const probeUrl = satelliteLive ? selection.probeUrl : null;
-  const preloadKey = satelliteLive ? selection.preloadUrls.join("\n") : "";
+  const preloadKey = satelliteLive && PRELOAD_NEIGHBOUR_TILES
+    ? selection.preloadUrls.join("\n")
+    : "";
 
   useEffect(() => {
     if (!selection || selection.kind !== "still" || latch.still !== "open") return undefined;
@@ -103,6 +107,7 @@ export default function App() {
       basemapStatus={selection.status}
       whatsappUrl={WHATSAPP_URL}
       maxZoom={view.maxZoom}
+      minZoom={view.minZoom}
       center={view.center}
       zoom={view.zoom}
       mapKey={farmViewKey(located, view, selection.kind)}

@@ -27,7 +27,7 @@ function viewOf(farm, latch = INITIAL_LATCH) {
 }
 
 describe("resolveFarmView", () => {
-  it("lets HiveMap fit hive GPS and takes maxZoom from the satellite selection", () => {
+  it("calms satellite hive fit under maxZoom 18 and keeps still pins for HiveMap fit", () => {
     const farm = {
       basemap: {
         satellite: satellite(18),
@@ -42,8 +42,17 @@ describe("resolveFarmView", () => {
       ],
     };
 
-    expect(viewOf(farm)).toEqual({ maxZoom: 18, source: "hives" });
-    expect(viewOf(example)).toEqual({ maxZoom: 18, source: "hives" });
+    expect(viewOf(farm)).toEqual({
+      maxZoom: 18,
+      minZoom: 14,
+      source: "hives",
+      center: [-23.1, -46.2],
+      zoom: 16,
+    });
+    const sample = viewOf(example);
+    expect(sample).toMatchObject({ maxZoom: 18, minZoom: 14, source: "hives", zoom: 16 });
+    expect(sample.center[0]).toBeCloseTo(-23.948, 3);
+    expect(sample.center[1]).toBeCloseTo(-46.987, 3);
     expect(farm.basemap.bounds).toBeUndefined();
   });
 
@@ -129,6 +138,7 @@ describe("resolveFarmView", () => {
 
     expect(viewOf(farm)).toEqual({
       maxZoom: 18,
+      minZoom: 14,
       source: "bounds",
       center: [-15, -48],
       zoom: 16,
@@ -144,6 +154,7 @@ describe("resolveFarmView", () => {
       bounds: BOUNDS_5_KM,
     })).toEqual({
       maxZoom: 18,
+      minZoom: 14,
       source: "bounds",
       center: [-15, -48],
       zoom: 15,
@@ -157,6 +168,7 @@ describe("resolveFarmView", () => {
       address: "",
     })).toEqual({
       maxZoom: 18,
+      minZoom: 14,
       source: "center",
       center: [-15, -48],
       zoom: 16,
@@ -168,6 +180,7 @@ describe("resolveFarmView", () => {
       bounds: BOUNDS_500_M,
     })).toEqual({
       maxZoom: 14,
+      minZoom: 11,
       source: "bounds",
       center: [-15, -48],
       zoom: 14,
@@ -191,9 +204,9 @@ describe("resolveFarmView", () => {
       hives: [],
     });
 
-    expect(addressed).toEqual({ maxZoom: 18, source: "placeholder" });
+    expect(addressed).toEqual({ maxZoom: 18, minZoom: 14, source: "placeholder" });
     expect(empty).toEqual(absent);
-    expect(absent).toEqual({ maxZoom: 18, source: "placeholder" });
+    expect(absent).toEqual({ maxZoom: 18, minZoom: 14, source: "placeholder" });
   });
 
   it("does not read maxZoom or sample bounds while satellite is selected", () => {
@@ -208,7 +221,7 @@ describe("resolveFarmView", () => {
     const selection = select(tiles);
     expect(selection.kind).toBe("satellite");
     expect(selection.paint.bounds).toBeUndefined();
-    expect(resolveFarmView(tiles, selection)).toEqual({ maxZoom: 18, source: "placeholder" });
+    expect(resolveFarmView(tiles, selection)).toEqual({ maxZoom: 18, minZoom: 14, source: "placeholder" });
 
     const pins = viewOf({
       basemap: { fallback: { image: STILL_IMAGE, bounds: BOUNDS_500_M } },
