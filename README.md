@@ -23,9 +23,10 @@ src/
     bombus.d.ts        props of every component (documentation)
     fonts/             Outfit, Atkinson Hyperlegible, JetBrains Mono
   data/
-    example-farm.json  sample farm: basemap slots, 4 sections, 21 hives (PLACEHOLDER coordinates)
-    resolveBasemap.js  picks the satellite slot or the static fallback
-    resolveFarmView.js chooses where the camera looks from hive GPS, center, or bounds
+    example-farm.json  sample farm with no still: EOX tiles, sample image, 4 sections, 21 hives
+    mock-still-farm.json  sharp still, matching bounds, hive GPS inside those bounds
+    resolveBasemap.js  picks the farm still, EOX tiles, or the sample image
+    resolveFarmView.js chooses where the camera looks from hive GPS, farm centre, or a still box
     statusMap.js       turns your backend's hives into what the map expects
   Dashboard.jsx        the app's single screen
   App.jsx              loads the data — swap the example for your API here
@@ -58,14 +59,17 @@ Each hive needs (see `src/data/statusMap.js` → `toHive`, adjust the field name
 
 Portuguese status words from the backend (`estavel`, `perdida`…) are mapped by `toStatusKey`.
 
-## Satellite basemap
+## Basemap
 
-The map shows free satellite imagery from EOX Sentinel-2 Cloudless 2025. No account and no API key.
+The map paints one basemap. A farm still wins when the payload includes `basemap.image` and `basemap.bounds` and that image loads. Free EOX Sentinel-2 Cloudless 2025 tiles are the fallback when the still is absent or fails before it decodes. The `fallback` image is the offline sample, and it is also the paint after every live tile has failed. No account and no API key.
 
-`src/data/example-farm.json` keeps two slots under `basemap`. The app shows exactly one of them.
+`src/data/example-farm.json` has no top-level `image`. The app loads that file at `/`, so the default screen is EOX. `src/data/mock-still-farm.json` points the still at `/assets/farm-basemap.jpg`, with bounds that match the photo and fictional hive GPS inside those bounds. Open `/?farm=still` to load the mock. Both files keep an empty `address`. The browser does not geocode `address`. Do not commit a street, a house number, or a private geocode.
 
 ```json
 "basemap": {
+  "image": "/assets/farm-basemap.jpg",
+  "bounds": [[-23.949258, -46.988093], [-23.946742, -46.983907]],
+  "attribution": "Imagem da propriedade",
   "satellite": {
     "tiles": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg",
     "maxZoom": 18,
@@ -80,27 +84,23 @@ The map shows free satellite imagery from EOX Sentinel-2 Cloudless 2025. No acco
 }
 ```
 
-`satellite` is the default. Keep EOX's `{z}/{y}/{x}` order. `maxZoom` stays 18 because this mosaic returns 404 at zoom 19. The map passes that 18 to HiveMap, so the plus button, the mouse wheel, and pinch stop at 18. Fit stops one level lower, at 17. The app does not request empty zoom-19 tiles.
+Put the farm picture on `image` and `bounds`. A `still` key is rejected. `tiles` belongs on `satellite`. Keep EOX's `{z}/{y}/{x}` order.
 
-Tiles fade in over 0.35 seconds. When the reader prefers reduced motion, tiles appear at once. The app also preloads the centre tile at zoom 16 and the four tiles next to it. Markers stay visible while tiles arrive. There is no full-screen spinner.
+A loaded still has an empty status line. Healthy EOX uses `Sem imagem da propriedade. Mostrando satélite com detalhe limitado.` That sentence means the imagery is limited. If the zoom-16 probe fails while tiles are on screen, or while they are still loading, the status line is only `Não foi possível confirmar o satélite. Mantendo o mapa ao vivo.` The live tiles stay. The sample image replaces the tiles only when every tile image has already finished with no pixels. After a still has decoded, a later error does not switch the basemap to tiles. One early still failure can switch to EOX. A second failure leaves that choice in place.
 
-On startup the app requests one tile at zoom 16. That request does not block the dashboard. If it fails while tiles are on screen, or while they are still loading, the status line reads `Não foi possível confirmar o satélite. Mantendo o mapa ao vivo.` and the live tiles stay. The saved farm image replaces the tiles only when every tile image has already finished with no pixels. A failure after the first tile has painted does not switch to that image.
+On the EOX path, `maxZoom` stays 18 because this mosaic returns 404 at zoom 19. The map passes that 18 to HiveMap, so the plus button, the mouse wheel, and pinch stop at 18. Fit stops one level lower, at 17. The app does not request empty zoom-19 tiles. A still omits that cap, so HiveMap uses its default maximum of 21.
 
-`fallback` is that saved image. Without a `fallback` slot, a total tile failure keeps the plain map surface and the status line does not mention a saved image.
-
-Do not put `tiles` and `image` in the same slot. The app throws on startup if you do.
+Tiles fade in over 0.35 seconds. When the reader prefers reduced motion, tiles appear at once. Tile preload runs only on the EOX path. The app requests the centre tile at zoom 16 and the four tiles next to it. Markers stay visible while tiles arrive. There is no full-screen spinner.
 
 When you move to a new mosaic year, change the year in `tiles` and in `attribution` together. Tests fail if the years disagree.
 
-The farm object may also include hive GPS (`lat` / `lng`, or `latitude` / `longitude`), `center` as `[lat, lng]`, `bounds` as `[[south, west], [north, east]]`, and `address`. Hive GPS wins. The map fits those hives and does not take `center` or `zoom` from the payload. A hive with a null coordinate is skipped. `Number(null)` is 0, and that pin would sit at 0,0. With no hive GPS, `center` and `bounds` open the map between zoom 15 and 16, still capped by satellite `maxZoom`. Farm `bounds` are not copied onto the fallback image. That image box would clamp panning to the old photo. The browser does not geocode `address`. An empty `address` counts as absent. Send `center` or hive GPS from the backend when the map should open on a real place.
+The farm object may also include hive GPS (`lat` / `lng`, or `latitude` / `longitude`), `center` as `[lat, lng]`, `bounds` as `[[south, west], [north, east]]`, and `address`. Hive GPS wins. The map fits those hives. On that path, payload `center` and `zoom` stay unused. A hive with a null coordinate is skipped. `Number(null)` is 0, and that pin would sit at 0,0. With no hive GPS, farm `center` and farm `bounds` open the map between zoom 15 and 16, still capped by satellite `maxZoom` when EOX is the paint. If those fields are absent too, a still or the sample image uses its own bounds. The EOX paint has no `bounds`, so panning on tiles ignores the still rectangle. An empty `address` counts as absent. Send `center`, `bounds`, or hive GPS from the backend when the map should open on a real place.
 
-`example-farm.json` keeps placeholder coordinates and an empty `address`. Do not commit a real street as the sample.
-
-EOX free mosaics for 2018 to 2025 are CC BY-NC-SA 4.0. Viewing your own farm is the intended free use. If the dashboard is sold, white-labeled, or run as a paid multi-tenant product, get an EOX commercial license or move to a paid provider first. Mapbox Satellite is an optional later upgrade, with a token from the environment and never committed. This version does not require it.
+EOX free mosaics for 2018 to 2025 are CC BY-NC-SA 4.0. Viewing your own farm is the intended free use. If the dashboard is sold, white-labeled, or run as a paid multi-tenant product, get an EOX commercial license or replace the mosaic first.
 
 ## Before going live
 
-1. **Map image + coordinates.** `example-farm.json` ships EOX tiles plus an example fallback image at made-up coordinates. Keep `basemap.satellite` on the EOX template unless you change the mosaic year in the URL and the attribution together. Put your farm photo in `public/assets/`, set `basemap.fallback.bounds` to the real corners `[[south, west], [north, east]]`, and use real GPS for every hive and section corner.
+1. **Map image + coordinates.** Send the sharp still as `basemap.image` and `basemap.bounds`. Keep `basemap.satellite` on the EOX template unless you change the mosaic year in the URL and the attribution together. `basemap.fallback` stays the offline sample. Host the still yourself or put it in `public/assets/`, set the still bounds to the real corners `[[south, west], [north, east]]`, and use real GPS for every hive and section corner. Leave `address` empty in the repo.
 2. **WhatsApp number.** Set `WHATSAPP_URL` in `src/App.jsx` (e.g. `https://wa.me/5511999999999`).
 3. **Dark mode** (optional): add `data-theme="dark"` to `<html>`.
 

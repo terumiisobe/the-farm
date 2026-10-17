@@ -311,5 +311,5 @@
   }
  ],
  "address": "",
- "_note": "EXAMPLE DATA. Coordinates are placeholders, not a real farm. address is empty on purpose. Hive GPS, center, or bounds from your API place the map. The browser does not geocode address. Replace hives with what your backend returns, and replace basemap.fallback.bounds with the corners of your fallback image."
+ "_note": "EXAMPLE DATA. Coordinates are placeholders, not a real farm. address is empty on purpose. This file omits basemap.image so the default screen uses EOX. Put a sharp still on basemap.image and basemap.bounds. Hive GPS, center, or bounds from your API place the map. The browser does not geocode address."
 }

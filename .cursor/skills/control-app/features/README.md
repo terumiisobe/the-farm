@@ -6,7 +6,7 @@ This directory is the maintained source for verifying user-facing behavior of th
 
 - Launch with `control-app launch` so Vite serves `CONTROL_APP_BASE_URL` (default `http://127.0.0.1:5173`).
 - Set a unique `CONTROL_APP_RUN_ID` (and free `CONTROL_APP_PORT`) when another verification run may be active.
-- Sample farm data is the bundled `src/data/example-farm.json` (4 setores, 21 colmeias). No separate seed step.
+- Sample farm data is the bundled `src/data/example-farm.json` (4 setores, 21 colmeias). No separate seed step. `/?farm=still` loads `src/data/mock-still-farm.json` for the still basemap. Doctor stays on `/`.
 - Put `.cursor/skills/control-app/scripts` on `PATH`.
 - Run `control-app doctor` and require farm heading `Meliponário Isobe`, brand absent, map present, WhatsApp in the header, and no page scroll.
 - Never drive an instance that was not started by this verification run.
@@ -44,4 +44,5 @@ Keep implementation details out of the map. Name only user paths, stable handles
 
 - [Dashboard shell](./dashboard-shell.md) covers farm chrome: name, summary line, Bombus mark.
 - [Hive map](./hive-map.md) covers map presence, hive selection/details, zoom, and legend filtering.
+- [Basemap](./basemap.md) covers the sharp still at `/?farm=still` and EOX tiles on `/`.
 - [WhatsApp bot link](./whatsapp-link.md) covers the outbound BotLink strip and its `wa.me` target.
