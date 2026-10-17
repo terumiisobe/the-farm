@@ -1,0 +1,45 @@
+- banner:
+  - heading "Meliponário Isobe" [level=1]
+  - link "WhatsApp (abre o WhatsApp em uma nova aba)":
+    - /url: https://wa.me/
+    - text: WhatsApp
+- status
+- application "Mapa das colmeias. Arraste para mover, role ou use + e − para zoom, setas para mover, 0 para enquadrar.":
+  - button "Colmeia 2, Estável": "2"
+  - button "Colmeia 1, Estável": "1"
+  - button "Colmeia 17, Estável": "17"
+  - button "Colmeia 4, Estável": "4"
+  - button "Colmeia 3, Recuperando": "3"
+  - button "Colmeia 5, Desenvolvendo": "5"
+  - button "Colmeia 18, Recuperando": "18"
+  - button "Colmeia 19, Estável": "19"
+  - button "Colmeia 13, Estável": "13"
+  - button "Colmeia 14, Estável": "14"
+  - button "Colmeia 6, Estável": "6"
+  - button "Colmeia 20, Estável": "20"
+  - button "Colmeia 7, Estável": "7"
+  - button "Colmeia 15, Desenvolvendo": "15"
+  - button "Colmeia 16, Estável": "16"
+  - button "Colmeia 21, Vendida": "21"
+  - button "Colmeia 8, Perdida": "8"
+  - button "Colmeia 9, Estável": "9"
+  - button "Colmeia 10, Recuperando": "10"
+  - button "Colmeia 11, Estável": "11"
+  - button "Colmeia 12, Vendida": "12"
+- button "21 colmeias" [expanded]
+- list:
+  - listitem:
+    - button "Estável 13" [pressed]
+  - listitem:
+    - button "Desenvolvendo 2" [pressed]
+  - listitem:
+    - button "Recuperando 3" [pressed]
+  - listitem:
+    - button "Perdida 1" [pressed]
+  - listitem:
+    - button "Vendida 2" [pressed]
+- group "Zoom":
+  - button "Aproximar"
+  - button "Afastar"
+  - button "Enquadrar todas as colmeias"
+- text: Imagem da propriedade

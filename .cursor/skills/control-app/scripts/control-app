@@ -18,6 +18,9 @@ export CONTROL_APP_BASE_URL="${CONTROL_APP_BASE_URL:-http://${CONTROL_APP_HOST}:
 export CONTROL_APP_STATE_DIR="${CONTROL_APP_STATE_DIR:-/tmp/control-app-${CONTROL_APP_RUN_ID}}"
 export CONTROL_APP_ARTIFACTS="${CONTROL_APP_ARTIFACTS:-$SKILL_DIR/artifacts}"
 export CONTROL_APP_CHROME_BIN="${CONTROL_APP_CHROME_BIN:-$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || true)}"
+export CONTROL_APP_MOCK_PORT="${CONTROL_APP_MOCK_PORT:-8791}"
+export CONTROL_APP_MOCK_HOST="${CONTROL_APP_MOCK_HOST:-127.0.0.1}"
+export CONTROL_APP_MOCK_BASE_URL="${CONTROL_APP_MOCK_BASE_URL:-http://${CONTROL_APP_MOCK_HOST}:${CONTROL_APP_MOCK_PORT}}"
 
 mkdir -p "$CONTROL_APP_STATE_DIR" "$CONTROL_APP_ARTIFACTS"
 
@@ -38,6 +41,7 @@ Env:
   CONTROL_APP_HOST      Bind/listen host (default: 127.0.0.1)
   CONTROL_APP_BASE_URL  Override URL (default: http://HOST:PORT)
   CONTROL_APP_ARTIFACTS Evidence directory (default: .cursor/skills/control-app/artifacts)
+  CONTROL_APP_MOCK_PORT Local mock API port (default: 8791). Launch starts this and points Vite at it.
 EOF
 }
 
@@ -66,6 +70,41 @@ ensure_deps() {
   fi
 }
 
+start_mock_api() {
+  local mock_state="$CONTROL_APP_STATE_DIR/mock-api.json"
+  if [[ -f "$mock_state" ]]; then
+    local mock_pid
+    mock_pid="$(node -e "const s=require(process.argv[1]); process.stdout.write(String(s.pid||''))" "$mock_state" 2>/dev/null || true)"
+    if [[ -n "${mock_pid:-}" ]] && kill -0 "$mock_pid" 2>/dev/null; then
+      echo "control-app: mock API already running pid=$mock_pid url=$CONTROL_APP_MOCK_BASE_URL" >&2
+      return 0
+    fi
+  fi
+  local mock_log="$CONTROL_APP_STATE_DIR/mock-api.log"
+  (
+    cd "$REPO_ROOT"
+    exec node "$SKILL_DIR/scripts/lib/mock-api.mjs"
+  ) >"$mock_log" 2>&1 &
+  local mock_pid=$!
+  local i
+  for i in $(seq 1 40); do
+    if ! kill -0 "$mock_pid" 2>/dev/null; then
+      echo "control-app: mock API exited early; see $mock_log" >&2
+      tail -n 40 "$mock_log" >&2 || true
+      exit 1
+    fi
+    if curl -fsS -H 'X-User-Id: 1' -H 'Accept: application/json' \
+      "$CONTROL_APP_MOCK_BASE_URL/v1/meliponarios/1" 2>/dev/null | grep -q 'farmName'; then
+      echo "control-app: mock API ready pid=$mock_pid url=$CONTROL_APP_MOCK_BASE_URL" >&2
+      return 0
+    fi
+    sleep 0.1
+  done
+  echo "control-app: timed out waiting for mock API (log: $mock_log)" >&2
+  kill "$mock_pid" 2>/dev/null || true
+  exit 1
+}
+
 cmd_launch() {
   ensure_deps
   local state="$CONTROL_APP_STATE_DIR/state.json"
@@ -79,6 +118,8 @@ cmd_launch() {
     fi
   fi
 
+  start_mock_api
+
   local log="$CONTROL_APP_STATE_DIR/vite.log"
   local pid_file="$CONTROL_APP_STATE_DIR/vite.pid"
   # Exec the vite binary directly so $pid is the server (not an npm wrapper that orphans children).
@@ -89,6 +130,10 @@ cmd_launch() {
   fi
   (
     cd "$REPO_ROOT"
+    # Point Vite at the skill mock so doctor/drive work without Render CORS.
+    export VITE_API_BASE_URL="$CONTROL_APP_MOCK_BASE_URL"
+    export VITE_MELIPONARIO_ID="${VITE_MELIPONARIO_ID:-1}"
+    export VITE_USER_ID="${VITE_USER_ID:-1}"
     exec node "$vite_bin" --host "$CONTROL_APP_HOST" --port "$CONTROL_APP_PORT" --strictPort
   ) >"$log" 2>&1 &
   local pid=$!
@@ -167,8 +212,23 @@ cmd_cleanup() {
   else
     echo "control-app: no live process for run $CONTROL_APP_RUN_ID" >&2
   fi
+
+  local mock_pid=""
+  if [[ -f "$CONTROL_APP_STATE_DIR/mock-api.json" ]]; then
+    mock_pid="$(node -e "const s=require(process.argv[1]); process.stdout.write(String(s.pid||''))" "$CONTROL_APP_STATE_DIR/mock-api.json" 2>/dev/null || true)"
+  fi
+  if [[ -n "${mock_pid:-}" ]] && kill -0 "$mock_pid" 2>/dev/null; then
+    kill "$mock_pid" 2>/dev/null || true
+    sleep 0.2
+    if kill -0 "$mock_pid" 2>/dev/null; then
+      kill -9 "$mock_pid" 2>/dev/null || true
+    fi
+    echo "control-app: stopped mock API pid=$mock_pid" >&2
+  fi
+
   # Scratch only — never delete CONTROL_APP_ARTIFACTS.
   rm -f "$CONTROL_APP_STATE_DIR/state.json" "$CONTROL_APP_STATE_DIR/vite.pid" \
+    "$CONTROL_APP_STATE_DIR/mock-api.json" \
     "$CONTROL_APP_STATE_DIR/browser-server.json" "$CONTROL_APP_STATE_DIR/browser.sock" 2>/dev/null || true
   echo "control-app: cleanup done (artifacts kept at $CONTROL_APP_ARTIFACTS)" >&2
 }

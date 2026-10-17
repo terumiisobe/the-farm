@@ -4,9 +4,9 @@ This directory is the maintained source for verifying user-facing behavior of th
 
 ## Baseline preconditions
 
-- Launch with `control-app launch` so Vite serves `CONTROL_APP_BASE_URL` (default `http://127.0.0.1:5173`).
+- Launch with `control-app launch` so Vite serves `CONTROL_APP_BASE_URL` (default `http://127.0.0.1:5173`). Launch also starts a local mock `GET /v1/meliponarios/{id}` and points Vite at it (`CONTROL_APP_MOCK_BASE_URL`, default `http://127.0.0.1:8791`) so doctor/drive do not need Render CORS.
 - Set a unique `CONTROL_APP_RUN_ID` (and free `CONTROL_APP_PORT`) when another verification run may be active.
-- Sample farm data is the bundled `src/data/example-farm.json` (4 setores, 21 colmeias). No separate seed step. `/?farm=still` loads `src/data/mock-still-farm.json` for the still basemap. Doctor stays on `/`.
+- Farm data for verification comes from that mock, built from `src/data/example-farm.json` (4 setores, 21 colmeias, operator still PNG). No `/?farm=still` route. Doctor stays on `/`.
 - Put `.cursor/skills/control-app/scripts` on `PATH`.
 - Run `control-app doctor` and require farm heading `Meliponário Isobe`, brand absent, map present, WhatsApp in the header, and no page scroll.
 - Never drive an instance that was not started by this verification run.
@@ -19,7 +19,7 @@ This directory is the maintained source for verifying user-facing behavior of th
 - Treat every command as literal. Keep quoted names and flags unchanged.
 - Run browser actions through `control-app browser`.
 - Portuguese UI copy is authoritative (`Estável`, `setores`, `colmeias`, …).
-- Cleanup removes the Vite process and `/tmp` scratch only. Proof artifacts stay under `.cursor/skills/control-app/artifacts/`.
+- Cleanup removes the Vite process, the mock API, and `/tmp` scratch only. Proof artifacts stay under `.cursor/skills/control-app/artifacts/`.
 
 ## Proof and skip reporting
 
@@ -42,7 +42,7 @@ Keep implementation details out of the map. Name only user paths, stable handles
 
 ## Features
 
-- [Dashboard shell](./dashboard-shell.md) covers farm chrome: name, summary line, Bombus mark.
+- [Dashboard shell](./dashboard-shell.md) covers farm chrome: name, WhatsApp in header, no Bombus mark, no page scroll.
 - [Hive map](./hive-map.md) covers map presence, hive selection/details, zoom, and legend filtering.
-- [Basemap](./basemap.md) covers the sharp still at `/?farm=still` and EOX tiles on `/`.
-- [WhatsApp bot link](./whatsapp-link.md) covers the outbound BotLink strip and its `wa.me` target.
+- [Basemap](./basemap.md) covers the operator still on `/` (EOX only after still decode failure — not harness-driveable).
+- [WhatsApp bot link](./whatsapp-link.md) covers the header BotLink and its `wa.me` target.
