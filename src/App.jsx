@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Dashboard from "./Dashboard.jsx";
 import example from "./data/example-farm.json";
-import { farmCentre, preloadTileUrls, resolveBasemap } from "./data/resolveBasemap.js";
+import {
+  INITIAL_LATCH,
+  nextLoadLatch,
+  parseFarmBasemap,
+  selectBasemap,
+} from "./data/resolveBasemap.js";
 import { farmViewKey, resolveFarmView } from "./data/resolveFarmView.js";
 import { pinLatLng, toHive } from "./data/statusMap.js";
 
@@ -23,61 +28,73 @@ export default function App() {
     if (!farm) return [];
     return (farm.hives ?? []).flatMap((hive) => (pinLatLng(hive) ? [toHive(hive)] : []));
   }, [farm]);
-  const tilesFailed = tileProbe === "failed";
+  const latch = useMemo(() => {
+    if (tileProbe === "failed") return nextLoadLatch(INITIAL_LATCH, { type: "tiles-hard" });
+    if (tileProbe === "soft") return nextLoadLatch(INITIAL_LATCH, { type: "tiles-soft" });
+    return INITIAL_LATCH;
+  }, [tileProbe]);
+  const catalog = useMemo(
+    () => (farm ? parseFarmBasemap(farm.basemap) : null),
+    [farm],
+  );
+  const selection = useMemo(
+    () => (catalog ? selectBasemap(catalog, { latch, hives }) : null),
+    [catalog, latch, hives],
+  );
   const located = farm ? { ...farm, hives } : null;
-  const map = located && resolveBasemap(located.basemap, {
-    hives,
-    tilesFailed,
-    softFail: tileProbe === "soft",
-  });
-  const view = located && resolveFarmView(located);
-  const probeUrl = map ? map.probeUrl : null;
-  const tiles = map && map.basemap ? map.basemap.tiles : undefined;
+  const view = located && selection ? resolveFarmView(located, selection) : null;
+  const satelliteLive = selection != null && selection.kind === "satellite" && latch.tiles !== "failed";
+  // A soft latch rebuilds the selection. The URL string stays put, so the probe does not start again.
+  const probeUrl = satelliteLive ? selection.probeUrl : null;
+  const preloadKey = satelliteLive ? selection.preloadUrls.join("\n") : "";
 
   useEffect(() => {
-    if (!probeUrl || tilesFailed) return undefined;
+    if (!probeUrl) return undefined;
     return probeTile(probeUrl, () => {
       setTileProbe((current) => {
         if (current === "failed") return current;
         return probeFailureMode(document.querySelectorAll(".bb-map__tile"));
       });
     });
-  }, [probeUrl, tilesFailed]);
+  }, [probeUrl]);
 
   useEffect(() => {
-    if (!farm || tilesFailed || !tiles) return undefined;
-    const centre = farmCentre(hives, farm.basemap.fallback);
-    if (!centre) return undefined;
-    const Img = globalThis.Image;
-    const images = preloadTileUrls(tiles, centre).map((url) => {
-      const img = new Img();
-      img.src = url;
-      return img;
-    });
-    return () => {
-      for (const img of images) {
-        img.onload = null;
-        img.onerror = null;
-      }
-    };
-  }, [farm, hives, tilesFailed, tiles]);
+    if (!preloadKey) return undefined;
+    return preloadImages(preloadKey.split("\n"));
+  }, [preloadKey]);
 
-  if (!located || !map || !view) return null;
+  if (!located || !selection || !view) return null;
 
   return (
     <Dashboard
       farmName="Meliponário Isobe"
       hives={hives}
       sections={located.sections}
-      basemap={map.basemap}
-      basemapStatus={map.status}
+      basemap={selection.paint}
+      basemapStatus={selection.status}
       whatsappUrl={WHATSAPP_URL}
       maxZoom={view.maxZoom}
       center={view.center}
       zoom={view.zoom}
-      mapKey={farmViewKey(located, view)}
+      mapKey={farmViewKey(located, view, selection.kind)}
     />
   );
+}
+
+function preloadImages(urls) {
+  if (!urls || urls.length === 0) return undefined;
+  const Img = globalThis.Image;
+  const images = urls.map((url) => {
+    const img = new Img();
+    img.src = url;
+    return img;
+  });
+  return () => {
+    for (const img of images) {
+      img.onload = null;
+      img.onerror = null;
+    }
+  };
 }
 
 function probeFailureMode(tiles) {

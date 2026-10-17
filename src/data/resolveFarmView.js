@@ -1,3 +1,4 @@
+import { isBasemapSelection } from "./resolveBasemap.js";
 import { pinLatLng } from "./statusMap.js";
 
 const CALM_MIN_ZOOM = 15;
@@ -7,14 +8,18 @@ const METERS_PER_DEGREE = 111320;
 
 /**
  * Where HiveMap should look. Hive pins omit centre and zoom so the map fits them.
- * `center` and `bounds` are farm fields. They are never copied onto `basemap`.
+ * Farm `center` and `bounds` beat a still or sample box. Satellite paint has no bounds to read.
  *
  * @param {unknown} farm
- * @returns {{ maxZoom?: number, source: "hives" | "center" | "bounds" | "placeholder", center?: [number, number], zoom?: number }}
+ * @param {object} selection
+ * @returns {{ maxZoom?: number, source: "hives" | "center" | "bounds" | "still" | "placeholder", center?: [number, number], zoom?: number }}
  */
-export function resolveFarmView(farm) {
+export function resolveFarmView(farm, selection) {
+  if (!isBasemapSelection(selection)) {
+    throw new Error("resolveFarmView requires a basemap selection");
+  }
   const record = farm && typeof farm === "object" ? farm : {};
-  const maxZoom = satelliteMaxZoom(record);
+  const maxZoom = selection.kind === "satellite" ? selection.paint.maxZoom : null;
   if (hivePins(record).length > 0) return pack(maxZoom, { source: "hives" });
 
   const center = pair(record.center);
@@ -26,18 +31,30 @@ export function resolveFarmView(farm) {
   if (bounds) {
     return pack(maxZoom, {
       source: "bounds",
-      center: [(bounds[0][0] + bounds[1][0]) / 2, (bounds[0][1] + bounds[1][1]) / 2],
+      center: midpoint(bounds),
       zoom: zoomForBounds(bounds, maxZoom),
+    });
+  }
+  if (selection.kind === "still" || selection.kind === "sample") {
+    const imageBounds = selection.paint.bounds;
+    return pack(maxZoom, {
+      source: selection.kind === "still" ? "still" : "bounds",
+      center: midpoint(imageBounds),
+      zoom: zoomForBounds(imageBounds, maxZoom),
     });
   }
   return pack(maxZoom, { source: "placeholder" });
 }
 
 /**
- * Remount HiveMap when the farm id or the fitted place changes.
+ * Remount HiveMap when the farm id, the fitted place, or the basemap kind changes.
  * Source alone stays `hives` when a later payload swaps GPS, so the key also carries the pin box.
  */
-export function farmViewKey(farm, view) {
+export function farmViewKey(farm, view, kind) {
+  return `${placeKey(farm, view)}:${kind}`;
+}
+
+function placeKey(farm, view) {
   const id = farm && typeof farm === "object" && farm.id != null && String(farm.id) !== ""
     ? String(farm.id)
     : "farm";
@@ -61,13 +78,12 @@ export function farmViewKey(farm, view) {
   return `${id}:${view.source}`;
 }
 
-function pack(maxZoom, fields) {
-  return maxZoom == null ? fields : { maxZoom, ...fields };
+function midpoint(bounds) {
+  return [(bounds[0][0] + bounds[1][0]) / 2, (bounds[0][1] + bounds[1][1]) / 2];
 }
 
-function satelliteMaxZoom(farm) {
-  const maxZoom = farm.basemap && farm.basemap.satellite ? farm.basemap.satellite.maxZoom : undefined;
-  return typeof maxZoom === "number" && Number.isFinite(maxZoom) ? maxZoom : null;
+function pack(maxZoom, fields) {
+  return maxZoom == null ? fields : { maxZoom, ...fields };
 }
 
 function hivePins(farm) {

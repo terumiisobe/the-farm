@@ -123,17 +123,8 @@ export function nextLoadLatch(latch, event) {
   return Object.freeze({ still, tiles });
 }
 
-export function resolveBasemap(config, { hives = [], tilesFailed = false, softFail = false } = {}) {
-  const catalog = parseFarmBasemap(config);
-  let latch = INITIAL_LATCH;
-  if (tilesFailed) latch = nextLoadLatch(latch, { type: "tiles-hard" });
-  else if (softFail) latch = nextLoadLatch(latch, { type: "tiles-soft" });
-  const selection = selectBasemap(catalog, { latch, hives });
-  return {
-    basemap: selection.paint,
-    probeUrl: selection.probeUrl,
-    status: selection.status,
-  };
+export function isBasemapSelection(selection) {
+  return Boolean(selection && selection[selectionBrand] === true);
 }
 
 function emptyStatus(latch) {
