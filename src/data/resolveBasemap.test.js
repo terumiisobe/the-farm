@@ -14,20 +14,20 @@ const EOX_TILES = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/de
 const EOX_ATTR = "EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2025)";
 const SAMPLE_ATTR = "Imagem de satélite: exemplo · coordenadas ilustrativas";
 const SAMPLE_ALT = "Imagem de satélite da propriedade";
-const SAMPLE_IMAGE = "/assets/farm-basemap.jpg";
-const SAMPLE_BOUNDS = [[-23.949258, -46.988093], [-23.946742, -46.983907]];
+const SAMPLE_IMAGE = "/assets/farm-basemap.png";
+const SAMPLE_BOUNDS = [[-25.762684, -49.189889], [-25.761622, -49.188210]];
 const STATUS_IMAGE = "Satélite ao vivo indisponível. Mostrando a imagem salva da propriedade.";
 const STATUS_NONE = "Satélite ao vivo indisponível no momento.";
 const STATUS_SOFT = "Não foi possível confirmar o satélite. Mantendo o mapa ao vivo.";
 const STATUS_LIMITED_TILES = "Sem imagem da propriedade. Mostrando satélite com detalhe limitado.";
 const STATUS_LIMITED_SAMPLE = "Sem imagem da propriedade. Mostrando a imagem de exemplo.";
-const SAMPLE_PROBE = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37260/24214.jpg";
+const SAMPLE_PROBE = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37624/23813.jpg";
 const PRELOAD_URLS = [
   SAMPLE_PROBE,
-  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37260/24215.jpg",
-  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37260/24213.jpg",
-  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37261/24214.jpg",
-  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37259/24214.jpg",
+  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37624/23814.jpg",
+  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37624/23812.jpg",
+  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37625/23813.jpg",
+  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37623/23813.jpg",
 ];
 const TILE_KEYS = ["attribution", "maxZoom", "minZoom", "tiles"];
 const IMAGE_KEYS = ["alt", "attribution", "bounds", "image"];
@@ -69,7 +69,7 @@ describe("parseFarmBasemap and selectBasemap", () => {
     expect(Object.keys(chosen.paint).sort()).toEqual(["attribution", "bounds", "image"]);
 
     chosen.paint.bounds[0][0] = 0;
-    expect(raw.bounds[0][0]).toBe(-23.949258);
+    expect(raw.bounds[0][0]).toBe(-25.762684);
   });
 
   it("keeps the still while it is open or shown", () => {
@@ -120,9 +120,13 @@ describe("parseFarmBasemap and selectBasemap", () => {
   });
 
   it("paints EOX with no bounds when the payload omits a still", () => {
-    const chosen = choose(example.basemap, INITIAL_LATCH, example.hives);
+    const eoxOnly = {
+      satellite: example.basemap.satellite,
+      fallback: example.basemap.fallback,
+    };
+    const chosen = choose(eoxOnly, INITIAL_LATCH, example.hives);
 
-    expect(example.basemap.image).toBeUndefined();
+    expect(eoxOnly.image).toBeUndefined();
     expect(chosen.kind).toBe("satellite");
     expect(chosen.paint.tiles).toBe(EOX_TILES);
     expect(chosen.paint.attribution).toBe(EOX_ATTR);
@@ -149,7 +153,7 @@ describe("parseFarmBasemap and selectBasemap", () => {
     expect(chosen.paint.bounds).toBeUndefined();
     expect(chosen.paint.tiles).toBe(SAT.tiles);
     expect(chosen.status).toBe(STATUS_LIMITED_TILES);
-    expect(chosen.probeUrl).toBe("https://tiles.example/16/37260/24214.jpg");
+    expect(chosen.probeUrl).toBe("https://tiles.example/16/37624/23813.jpg");
   });
 
   it("keeps a decoded still when a later failure arrives", () => {
@@ -170,7 +174,7 @@ describe("parseFarmBasemap and selectBasemap", () => {
     expect(chosen.paint.image).toBeUndefined();
     expect(chosen.paint.bounds).toBeUndefined();
     expect(chosen.paint.tiles).toBe(SAT.tiles);
-    expect(chosen.probeUrl).toBe("https://tiles.example/16/37260/24214.jpg");
+    expect(chosen.probeUrl).toBe("https://tiles.example/16/37624/23813.jpg");
     expect(nextLoadLatch(soft, { type: "tiles-soft" })).toBe(soft);
   });
 
@@ -178,7 +182,11 @@ describe("parseFarmBasemap and selectBasemap", () => {
     const hard = nextLoadLatch(INITIAL_LATCH, { type: "tiles-hard" });
     const again = nextLoadLatch(hard, { type: "tiles-hard" });
     const fromSoft = nextLoadLatch(nextLoadLatch(INITIAL_LATCH, { type: "tiles-soft" }), { type: "tiles-hard" });
-    const chosen = choose(example.basemap, again, example.hives);
+    const eoxOnly = {
+      satellite: example.basemap.satellite,
+      fallback: example.basemap.fallback,
+    };
+    const chosen = choose(eoxOnly, again, example.hives);
 
     expect(again).toBe(hard);
     expect(fromSoft.tiles).toBe("failed");
@@ -192,7 +200,7 @@ describe("parseFarmBasemap and selectBasemap", () => {
     expect(chosen.status).toBe(STATUS_IMAGE);
 
     chosen.paint.bounds[0][0] = 0;
-    expect(example.basemap.fallback.bounds[0][0]).toBe(-23.949258);
+    expect(example.basemap.fallback.bounds[0][0]).toBe(-25.762684);
   });
 
   it("names limited imagery for a sample that is not covering a tile failure", () => {
@@ -269,7 +277,7 @@ describe("parseFarmBasemap and selectBasemap", () => {
 describe("tile urls", () => {
   it("shares the sample centre tile and its four neighbours", () => {
     const centre = farmCentre(example.hives, example.basemap.fallback);
-    expect(centre).toEqual([-23.947951500000002, -46.986708]);
+    expect(centre).toEqual([-25.762132528219396, -49.18933347802198]);
     expect(tileUrl(EOX_TILES, centre, 16)).toBe(SAMPLE_PROBE);
     expect(preloadTileUrls(EOX_TILES, centre)).toEqual(PRELOAD_URLS);
   });

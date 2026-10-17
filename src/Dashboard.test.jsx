@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import Dashboard from "./Dashboard.jsx";
+import Dashboard, { STILL_BUILD } from "./Dashboard.jsx";
 import "./app.css";
 
 const WHATSAPP_URL = "https://wa.me/5511999999999";
@@ -43,8 +43,9 @@ describe("Dashboard", () => {
 
     const map = container.querySelector(".bb-map");
     expect(map.style.height).toBe("100%");
-    expect(map.nextElementSibling).toBeNull();
     expect(map.parentElement.contains(links[0])).toBe(false);
+    expect(container.querySelector(".map-build").textContent).toBe(STILL_BUILD);
+    expect(STILL_BUILD).toBe("still-v3");
   });
 
   it("names the WhatsApp control as a new tab and keeps a 44 by 44 hit target", () => {
@@ -67,13 +68,14 @@ describe("Dashboard", () => {
 
     expect(status.textContent).toBe("");
     expect(map.previousElementSibling).toBe(status);
-    expect(map.nextElementSibling).toBeNull();
+    expect(map.nextElementSibling.className).toBe("map-build");
+    expect(map.nextElementSibling.textContent).toBe(STILL_BUILD);
 
     rerender(<Dashboard {...farm} basemapStatus={failure} />);
 
     expect(screen.getByRole("status")).toBe(status);
     expect(status.textContent).toBe(failure);
-    expect(container.querySelector(".bb-map").nextElementSibling).toBeNull();
+    expect(container.querySelector(".bb-map").nextElementSibling.textContent).toBe(STILL_BUILD);
   });
 
   it("hides page scroll on the dashboard shell", () => {

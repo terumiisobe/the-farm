@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Dashboard from "./Dashboard.jsx";
 import example from "./data/example-farm.json";
+import eoxFarm from "./data/mock-eox-farm.json";
 import stillFarm from "./data/mock-still-farm.json";
 import {
   INITIAL_LATCH,
@@ -19,7 +20,9 @@ const PRELOAD_NEIGHBOUR_TILES = false;
 
 function bundledFarm(search) {
   const name = new URLSearchParams(search).get("farm");
-  return name === "still" ? stillFarm : example;
+  if (name === "eox") return eoxFarm;
+  if (name === "still") return stillFarm;
+  return example;
 }
 
 function farmLatchKey(farm) {

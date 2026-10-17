@@ -23,8 +23,9 @@ src/
     bombus.d.ts        props of every component (documentation)
     fonts/             Outfit, Atkinson Hyperlegible, JetBrains Mono
   data/
-    example-farm.json  sample farm with no still: EOX tiles, sample image, 4 sections, 21 hives
-    mock-still-farm.json  sharp still, matching bounds, hive GPS inside those bounds
+    example-farm.json  sample farm with operator still + bounds, EOX fallback, 4 sections, 21 hives
+    mock-still-farm.json  harness still (same operator still box)
+    mock-eox-farm.json   no still: EOX path for harness (`/?farm=eox`)
     resolveBasemap.js  picks the farm still, EOX tiles, or the sample image
     resolveFarmView.js chooses where the camera looks from hive GPS, farm centre, or a still box
     statusMap.js       turns your backend's hives into what the map expects
@@ -63,12 +64,12 @@ Portuguese status words from the backend (`estavel`, `perdida`…) are mapped by
 
 The map paints one basemap. A farm still wins when the payload includes `basemap.image` and `basemap.bounds` and that image loads. Free EOX Sentinel-2 Cloudless 2025 tiles are the fallback when the still is absent or fails before it decodes. The `fallback` image is the offline sample, and it is also the paint after every live tile has failed. No account and no API key.
 
-`src/data/example-farm.json` has no top-level `image`. The app loads that file at `/`, so the default screen is EOX. `src/data/mock-still-farm.json` points the still at `/assets/farm-basemap.jpg`, with bounds that match the photo and fictional hive GPS inside those bounds. Open `/?farm=still` to load the mock. Both files keep an empty `address`. The browser does not geocode `address`. Do not commit a street, a house number, or a private geocode.
+`src/data/example-farm.json` is the default offline farm. It includes top-level `basemap.image` (`/assets/farm-basemap.png`) and operator SW/NE bounds `[[-25.762684, -49.189889], [-25.761622, -49.188210]]`, so `/` paints the still. EOX stays on `basemap.satellite` as fallback. Open `/?farm=eox` for the no-still path. Both files keep an empty `address`. The browser does not geocode `address`. Do not commit a street, a house number, or a private geocode.
 
 ```json
 "basemap": {
-  "image": "/assets/farm-basemap.jpg",
-  "bounds": [[-23.949258, -46.988093], [-23.946742, -46.983907]],
+  "image": "/assets/farm-basemap.png",
+  "bounds": [[-25.762684, -49.189889], [-25.761622, -49.188210]],
   "attribution": "Imagem da propriedade",
   "satellite": {
     "tiles": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg",
@@ -76,8 +77,8 @@ The map paints one basemap. A farm still wins when the payload includes `basemap
     "attribution": "EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2025)"
   },
   "fallback": {
-    "image": "/assets/farm-basemap.jpg",
-    "bounds": [[-23.949258, -46.988093], [-23.946742, -46.983907]],
+    "image": "/assets/farm-basemap.png",
+    "bounds": [[-25.762684, -49.189889], [-25.761622, -49.188210]],
     "attribution": "Imagem de satélite: exemplo · coordenadas ilustrativas",
     "alt": "Imagem de satélite da propriedade"
   }

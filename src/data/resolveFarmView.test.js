@@ -5,7 +5,7 @@ import { farmViewKey, resolveFarmView } from "./resolveFarmView.js";
 
 const BOUNDS_500_M = [[-15.002245777937478, -48.00232500040516], [-14.997754222062522, -47.99767499959484]];
 const BOUNDS_5_KM = [[-15.022457779374776, -48.02325000405161], [-14.977542220625224, -47.97674999594839]];
-const STILL_IMAGE = "/assets/farm-basemap.jpg";
+const STILL_IMAGE = "/assets/farm-basemap.png";
 
 function satellite(maxZoom = 18) {
   return {
@@ -49,10 +49,10 @@ describe("resolveFarmView", () => {
       center: [-23.1, -46.2],
       zoom: 16,
     });
-    const sample = viewOf(example);
-    expect(sample).toMatchObject({ maxZoom: 18, minZoom: 14, source: "hives", zoom: 16 });
-    expect(sample.center[0]).toBeCloseTo(-23.948, 3);
-    expect(sample.center[1]).toBeCloseTo(-46.987, 3);
+    const stillDefault = viewOf(example);
+    expect(stillDefault).toEqual({ source: "hives" });
+    expect(stillDefault.center).toBeUndefined();
+    expect(stillDefault.maxZoom).toBeUndefined();
     expect(farm.basemap.bounds).toBeUndefined();
   });
 

@@ -32,23 +32,25 @@ describe("shipped defaults", () => {
     expect(hits).toEqual([]);
   });
 
-  it("keeps the sharp still inside its own box and leaves the example farm on EOX", () => {
-    expect(example.basemap.image).toBeUndefined();
+  it("ships the default example on the operator still box with EOX as fallback", () => {
     expect(example.address).toBe("");
+    expect(example.basemap.image).toBe("/assets/farm-basemap.png");
+    expect(example.basemap.satellite.tiles).toContain("tiles.maps.eox.at");
+    expect(example.basemap.fallback.image).toBe("/assets/farm-basemap.png");
     expect(stillFarm.address).toBe("");
-    expect(stillFarm.basemap.image).toBe("/assets/farm-basemap.jpg");
-    expect(stillFarm.basemap.satellite.tiles).toContain("tiles.maps.eox.at");
-    expect(stillFarm.basemap.fallback.image).toBe("/assets/farm-basemap.jpg");
+    expect(stillFarm.basemap.image).toBe("/assets/farm-basemap.png");
 
-    const [[south, west], [north, east]] = stillFarm.basemap.bounds;
-    expect(south).toBeLessThan(north);
-    expect(west).toBeLessThan(east);
-    expect(stillFarm.hives.length).toBeGreaterThan(0);
-    for (const hive of stillFarm.hives) {
-      expect(hive.lat).toBeGreaterThanOrEqual(south);
-      expect(hive.lat).toBeLessThanOrEqual(north);
-      expect(hive.lng).toBeGreaterThanOrEqual(west);
-      expect(hive.lng).toBeLessThanOrEqual(east);
+    for (const farm of [example, stillFarm]) {
+      const [[south, west], [north, east]] = farm.basemap.bounds;
+      expect(south).toBeLessThan(north);
+      expect(west).toBeLessThan(east);
+      expect(farm.hives.length).toBeGreaterThan(0);
+      for (const hive of farm.hives) {
+        expect(hive.lat).toBeGreaterThanOrEqual(south);
+        expect(hive.lat).toBeLessThanOrEqual(north);
+        expect(hive.lng).toBeGreaterThanOrEqual(west);
+        expect(hive.lng).toBeLessThanOrEqual(east);
+      }
     }
   });
 });

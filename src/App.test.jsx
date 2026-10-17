@@ -2,7 +2,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App, { probeTile } from "./App.jsx";
 
-const PROBE_URL = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37260/24214.jpg";
+const PROBE_URL = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37624/23813.jpg";
 const STATUS_IMAGE = "Satélite ao vivo indisponível. Mostrando a imagem salva da propriedade.";
 const STATUS_SOFT = "Não foi possível confirmar o satélite. Mantendo o mapa ao vivo.";
 const STATUS_LIMITED_TILES = "Sem imagem da propriedade. Mostrando satélite com detalhe limitado.";
@@ -106,18 +106,17 @@ describe("probeTile", () => {
 describe("App", () => {
   it("paints the farm still and does not request EOX tiles", () => {
     HTMLElement.prototype.getBoundingClientRect = sizedRect;
-    window.history.replaceState({}, "", "/?farm=still");
-    const { FakeImage, images } = fakeImageClass();
+        const { FakeImage, images } = fakeImageClass();
     const realImage = globalThis.Image;
     globalThis.Image = FakeImage;
     try {
       const { container } = render(<App />);
       const still = container.querySelector(".bb-map__image");
 
-      expect(still.getAttribute("src")).toBe("/assets/farm-basemap.jpg");
+      expect(still.getAttribute("src")).toBe("/assets/farm-basemap.png");
       expect(container.querySelector(".bb-map__tile")).toBeNull();
       expect(screen.getByRole("status").textContent).toBe("");
-      expect(images.map((img) => img.src)).toEqual(["/assets/farm-basemap.jpg"]);
+      expect(images.map((img) => img.src)).toEqual(["/assets/farm-basemap.png"]);
     } finally {
       globalThis.Image = realImage;
     }
@@ -125,14 +124,13 @@ describe("App", () => {
 
   it("falls back to EOX once when the still fails before it decodes", () => {
     HTMLElement.prototype.getBoundingClientRect = sizedRect;
-    window.history.replaceState({}, "", "/?farm=still");
-    const { FakeImage, images } = fakeImageClass();
+        const { FakeImage, images } = fakeImageClass();
     const realImage = globalThis.Image;
     globalThis.Image = FakeImage;
     try {
       const { container } = render(<App />);
       const fail = images[0].onerror;
-      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.jpg");
+      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.png");
 
       act(() => {
         fail();
@@ -151,8 +149,7 @@ describe("App", () => {
 
   it("falls back to EOX when the still decodes with no pixels", () => {
     HTMLElement.prototype.getBoundingClientRect = sizedRect;
-    window.history.replaceState({}, "", "/?farm=still");
-    const { FakeImage, images } = fakeImageClass();
+        const { FakeImage, images } = fakeImageClass();
     const realImage = globalThis.Image;
     globalThis.Image = FakeImage;
     try {
@@ -173,8 +170,7 @@ describe("App", () => {
 
   it("stays on the still after it has decoded", () => {
     HTMLElement.prototype.getBoundingClientRect = sizedRect;
-    window.history.replaceState({}, "", "/?farm=still");
-    const { FakeImage, images } = fakeImageClass();
+        const { FakeImage, images } = fakeImageClass();
     const realImage = globalThis.Image;
     globalThis.Image = FakeImage;
     try {
@@ -189,7 +185,7 @@ describe("App", () => {
         fail();
       });
 
-      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.jpg");
+      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.png");
       expect(container.querySelector(".bb-map__tile")).toBeNull();
       expect(screen.getByRole("status").textContent).toBe("");
     } finally {
@@ -199,6 +195,7 @@ describe("App", () => {
 
   it("paints EOX tiles when the farm omits a still", () => {
     HTMLElement.prototype.getBoundingClientRect = sizedRect;
+    window.history.replaceState({}, "", "/?farm=eox");
     const { FakeImage, images } = fakeImageClass();
     const realImage = globalThis.Image;
     globalThis.Image = FakeImage;
@@ -209,13 +206,14 @@ describe("App", () => {
       expect(container.querySelector(".bb-map__image")).toBeNull();
       expect(screen.getByRole("status").textContent).toBe(STATUS_LIMITED_TILES);
       expect(images.some((img) => img.src.includes("tiles.maps.eox.at"))).toBe(true);
-      expect(images.some((img) => img.src === "/assets/farm-basemap.jpg")).toBe(false);
+      expect(images.some((img) => img.src === "/assets/farm-basemap.png")).toBe(false);
     } finally {
       globalThis.Image = realImage;
     }
   });
 
   it("keeps live tiles and shows the soft-fail line when the zoom-16 probe errors", () => {
+    window.history.replaceState({}, "", "/?farm=eox");
     const { FakeImage, images } = fakeImageClass();
     const realImage = globalThis.Image;
     globalThis.Image = FakeImage;
@@ -237,6 +235,7 @@ describe("App", () => {
   });
 
   it("keeps painted tiles up when the probe fails", () => {
+    window.history.replaceState({}, "", "/?farm=eox");
     HTMLElement.prototype.getBoundingClientRect = sizedRect;
     const { FakeImage, images } = fakeImageClass();
     const realImage = globalThis.Image;
@@ -260,6 +259,7 @@ describe("App", () => {
   });
 
   it("shows the saved farm image when every tile has already failed", () => {
+    window.history.replaceState({}, "", "/?farm=eox");
     HTMLElement.prototype.getBoundingClientRect = sizedRect;
     const { FakeImage, images } = fakeImageClass();
     const realImage = globalThis.Image;
@@ -276,7 +276,7 @@ describe("App", () => {
       });
 
       expect(screen.getByRole("status").textContent).toBe(STATUS_IMAGE);
-      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.jpg");
+      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.png");
       expect(container.querySelector(".bb-map__tile")).toBeNull();
     } finally {
       globalThis.Image = realImage;
