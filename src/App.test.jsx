@@ -12,6 +12,7 @@ const PRELOAD_URLS = [
 ];
 const STATUS_IMAGE = "Satélite ao vivo indisponível. Mostrando a imagem salva da propriedade.";
 const STATUS_SOFT = "Não foi possível confirmar o satélite. Mantendo o mapa ao vivo.";
+const STATUS_LIMITED_TILES = "Sem imagem da propriedade. Mostrando satélite com detalhe limitado.";
 const realRect = HTMLElement.prototype.getBoundingClientRect;
 
 function sizedRect() {
@@ -116,7 +117,7 @@ describe("App", () => {
     try {
       const { container } = render(<App />);
       expect(images.map((img) => img.src)).toEqual([PROBE_URL, ...PRELOAD_URLS]);
-      expect(screen.getByRole("status").textContent).toBe("");
+      expect(screen.getByRole("status").textContent).toBe(STATUS_LIMITED_TILES);
 
       act(() => {
         images[0].onerror();
