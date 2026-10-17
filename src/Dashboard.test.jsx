@@ -43,8 +43,8 @@ describe("Dashboard", () => {
 
     const map = container.querySelector(".bb-map");
     expect(map.style.height).toBe("100%");
-    expect(map.nextElementSibling).toBeNull();
     expect(map.parentElement.contains(links[0])).toBe(false);
+    expect(container.querySelector(".map-build")).toBeNull();
   });
 
   it("names the WhatsApp control as a new tab and keeps a 44 by 44 hit target", () => {
@@ -68,12 +68,22 @@ describe("Dashboard", () => {
     expect(status.textContent).toBe("");
     expect(map.previousElementSibling).toBe(status);
     expect(map.nextElementSibling).toBeNull();
+    expect(container.querySelector(".map-build")).toBeNull();
 
     rerender(<Dashboard {...farm} basemapStatus={failure} />);
 
     expect(screen.getByRole("status")).toBe(status);
     expect(status.textContent).toBe(failure);
-    expect(container.querySelector(".bb-map").nextElementSibling).toBeNull();
+    expect(container.querySelector(".map-build")).toBeNull();
+  });
+
+  it("uses a dark green letterbox behind the map surface", () => {
+    const { container } = render(<Dashboard {...farm} />);
+    const stage = container.querySelector(".map-stage");
+    const map = container.querySelector(".bb-map");
+
+    expect(getComputedStyle(stage).backgroundColor).toBe("rgb(18, 31, 24)");
+    expect(getComputedStyle(map).backgroundColor).toBe("rgb(18, 31, 24)");
   });
 
   it("hides page scroll on the dashboard shell", () => {

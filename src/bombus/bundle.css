@@ -99,7 +99,7 @@
 .bb-map {
   position: relative; overflow: hidden; isolation: isolate;
   border-radius: var(--radius-lg); border: var(--stroke-hairline) solid var(--ink);
-  background: var(--cocoa); font-family: var(--font-sans); color: var(--ink);
+  background: #121f18; font-family: var(--font-sans); color: var(--ink);
   user-select: none; -webkit-user-select: none;
 }
 .bb-map__surface { position: absolute; inset: 0; overflow: hidden; touch-action: none; cursor: grab; outline: none; }
@@ -108,6 +108,8 @@
 .bb-map__tiles, .bb-map__labels, .bb-map__markers { position: absolute; inset: 0; pointer-events: none; }
 .bb-map__markers .bb-marker { pointer-events: auto; }
 .bb-map__tile, .bb-map__image { position: absolute; max-width: none; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+.bb-map__tile { opacity: 0; transition: opacity .35s ease; }
+.bb-map__tile.is-loaded { opacity: 1; }
 .bb-map__image { image-rendering: auto; }
 .bb-map__sections { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
 .bb-map__section { fill: rgba(248, 208, 138, .08); stroke: var(--amber); stroke-width: var(--stroke-marker); stroke-dasharray: 8 5; stroke-linejoin: round; }
@@ -182,4 +184,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .bb-btn, .bb-marker__icon, .bb-botlink { transition: none; }
+  .bb-map__tile, .bb-map__tile.is-loaded { opacity: 1; transition: none; }
 }

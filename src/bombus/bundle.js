@@ -386,6 +386,8 @@
           var wx = ((tx % n) + n) % n;
           var url = basemap.tiles.replace("{z}", tz).replace("{x}", wx).replace("{y}", ty).replace("{s}", "abc"[(tx + ty) % 3 < 0 ? 0 : (tx + ty) % 3]);
           tiles.push(h("img", { key: tz + "/" + tx + "/" + ty, src: url, alt: "", draggable: false, className: "bb-map__tile",
+            ref: function (el) { if (el && el.complete && el.naturalWidth > 0) el.classList.add("is-loaded"); },
+            onLoad: function (e) { e.currentTarget.classList.add("is-loaded"); },
             style: { left: Math.round((tx - cxT) * ts + size.w / 2) + "px", top: Math.round((ty - cyT) * ts + size.h / 2) + "px", width: Math.ceil(ts) + 1 + "px", height: Math.ceil(ts) + 1 + "px" } }));
         }
         layers.push(h("div", { key: "tiles", className: "bb-map__tiles" }, tiles));
@@ -435,9 +437,19 @@
         });
       layers.push(h("div", { key: "markers", className: "bb-map__markers" }, markers));
 
-      // scale bar
-      var latC = unproject(view.x, view.y).lat;
-      var mpp = 156543.03392 * Math.cos(latC * Math.PI / 180) / s;
+      // scale bar — when the basemap has SW/NE bounds (still/sample), metres-per-pixel
+      // comes from that ground span so the bar matches the painted corners; otherwise
+      // fall back to Web Mercator at the view centre (tile path).
+      var mpp;
+      if (basemap && basemap.bounds && baseBox) {
+        var midLatRad = (basemap.bounds[0][0] + basemap.bounds[1][0]) / 2 * Math.PI / 180;
+        var groundW = Math.abs(basemap.bounds[1][1] - basemap.bounds[0][1]) * 111320 * Math.cos(midLatRad);
+        var screenW = Math.max((baseBox.maxX - baseBox.minX) * s, 1e-9);
+        mpp = groundW / screenW;
+      } else {
+        var latC = unproject(view.x, view.y).lat;
+        mpp = 156543.03392 * Math.cos(latC * Math.PI / 180) / s;
+      }
       var meters = niceMeters(mpp * 100);
       var px = meters / mpp;
       content = { layers: layers, scale: { px: px, label: meters >= 1000 ? (meters / 1000) + " km" : meters + " m" } };

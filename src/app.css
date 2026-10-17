@@ -57,6 +57,8 @@ body {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  /* Forest letterbox behind the still — not cream/cocoa empty canvas. */
+  background: #121f18;
 }
 
 .map-stage > .bb-map {
@@ -65,6 +67,7 @@ body {
   width: 100%;
   min-height: 0;
   border-radius: 0;
+  background: #121f18;
 }
 
 .wa-header {
