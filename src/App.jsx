@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Dashboard from "./Dashboard.jsx";
 import example from "./data/example-farm.json";
+import stillFarm from "./data/mock-still-farm.json";
 import {
   INITIAL_LATCH,
   nextLoadLatch,
@@ -14,25 +15,37 @@ import { pinLatLng, toHive } from "./data/statusMap.js";
 const WHATSAPP_URL = "https://wa.me/";
 const PROBE_TIMEOUT_MS = 8000;
 
+function bundledFarm(search) {
+  const name = new URLSearchParams(search).get("farm");
+  return name === "still" ? stillFarm : example;
+}
+
+function farmLatchKey(farm) {
+  if (!farm || typeof farm !== "object") return "local";
+  if (farm.id != null && String(farm.id) !== "") return String(farm.id);
+  const image = farm.basemap && typeof farm.basemap.image === "string" ? farm.basemap.image : "";
+  return image || "local";
+}
+
 export default function App() {
   const [farm, setFarm] = useState(null);
-  const [tileProbe, setTileProbe] = useState("ok");
+  const [latch, setLatch] = useState(INITIAL_LATCH);
 
   useEffect(() => {
-    // TODO: load from your backend instead of the example file, e.g.
-    //   fetch("/api/hives").then(r => r.json()).then(list => setFarm({ ...example, hives: list.map(toHive) }));
-    setFarm({ ...example, hives: example.hives.map(toHive) });
+    // TODO: load from your backend instead of the bundled file.
+    const payload = bundledFarm(window.location.search);
+    setFarm({ ...payload, hives: payload.hives.map(toHive) });
   }, []);
+
+  const latchKey = farmLatchKey(farm);
+  useEffect(() => {
+    setLatch(INITIAL_LATCH);
+  }, [latchKey]);
 
   const hives = useMemo(() => {
     if (!farm) return [];
     return (farm.hives ?? []).flatMap((hive) => (pinLatLng(hive) ? [toHive(hive)] : []));
   }, [farm]);
-  const latch = useMemo(() => {
-    if (tileProbe === "failed") return nextLoadLatch(INITIAL_LATCH, { type: "tiles-hard" });
-    if (tileProbe === "soft") return nextLoadLatch(INITIAL_LATCH, { type: "tiles-soft" });
-    return INITIAL_LATCH;
-  }, [tileProbe]);
   const catalog = useMemo(
     () => (farm ? parseFarmBasemap(farm.basemap) : null),
     [farm],
@@ -49,12 +62,28 @@ export default function App() {
   const preloadKey = satelliteLive ? selection.preloadUrls.join("\n") : "";
 
   useEffect(() => {
+    if (!selection || selection.kind !== "still" || latch.still !== "open") return undefined;
+    const Img = globalThis.Image;
+    const img = new Img();
+    const fail = () => setLatch((current) => nextLoadLatch(current, { type: "still-failed" }));
+    const show = () => setLatch((current) => nextLoadLatch(current, { type: "still-shown" }));
+    img.onload = () => (img.naturalWidth > 0 ? show() : fail());
+    img.onerror = fail;
+    img.src = selection.paint.image;
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [selection, latch.still]);
+
+  useEffect(() => {
     if (!probeUrl) return undefined;
     return probeTile(probeUrl, () => {
-      setTileProbe((current) => {
-        if (current === "failed") return current;
-        return probeFailureMode(document.querySelectorAll(".bb-map__tile"));
-      });
+      setLatch((current) => nextLoadLatch(current, {
+        type: probeFailureMode(document.querySelectorAll(".bb-map__tile")) === "failed"
+          ? "tiles-hard"
+          : "tiles-soft",
+      }));
     });
   }, [probeUrl]);
 

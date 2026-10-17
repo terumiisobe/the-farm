@@ -33,6 +33,7 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
   HTMLElement.prototype.getBoundingClientRect = realRect;
+  window.history.replaceState({}, "", "/");
 });
 
 function fakeImageClass() {
@@ -110,6 +111,117 @@ describe("probeTile", () => {
 });
 
 describe("App", () => {
+  it("paints the farm still and does not request EOX tiles", () => {
+    HTMLElement.prototype.getBoundingClientRect = sizedRect;
+    window.history.replaceState({}, "", "/?farm=still");
+    const { FakeImage, images } = fakeImageClass();
+    const realImage = globalThis.Image;
+    globalThis.Image = FakeImage;
+    try {
+      const { container } = render(<App />);
+      const still = container.querySelector(".bb-map__image");
+
+      expect(still.getAttribute("src")).toBe("/assets/farm-basemap.jpg");
+      expect(container.querySelector(".bb-map__tile")).toBeNull();
+      expect(screen.getByRole("status").textContent).toBe("");
+      expect(images.map((img) => img.src)).toEqual(["/assets/farm-basemap.jpg"]);
+    } finally {
+      globalThis.Image = realImage;
+    }
+  });
+
+  it("falls back to EOX once when the still fails before it decodes", () => {
+    HTMLElement.prototype.getBoundingClientRect = sizedRect;
+    window.history.replaceState({}, "", "/?farm=still");
+    const { FakeImage, images } = fakeImageClass();
+    const realImage = globalThis.Image;
+    globalThis.Image = FakeImage;
+    try {
+      const { container } = render(<App />);
+      const fail = images[0].onerror;
+      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.jpg");
+
+      act(() => {
+        fail();
+      });
+      act(() => {
+        fail();
+      });
+
+      expect(container.querySelector(".bb-map__image")).toBeNull();
+      expect(container.querySelector(".bb-map__tile").src).toContain("tiles.maps.eox.at");
+      expect(screen.getByRole("status").textContent).toBe(STATUS_LIMITED_TILES);
+    } finally {
+      globalThis.Image = realImage;
+    }
+  });
+
+  it("falls back to EOX when the still decodes with no pixels", () => {
+    HTMLElement.prototype.getBoundingClientRect = sizedRect;
+    window.history.replaceState({}, "", "/?farm=still");
+    const { FakeImage, images } = fakeImageClass();
+    const realImage = globalThis.Image;
+    globalThis.Image = FakeImage;
+    try {
+      const { container } = render(<App />);
+
+      act(() => {
+        images[0].naturalWidth = 0;
+        images[0].onload();
+      });
+
+      expect(container.querySelector(".bb-map__image")).toBeNull();
+      expect(container.querySelector(".bb-map__tile").src).toContain("tiles.maps.eox.at");
+      expect(screen.getByRole("status").textContent).toBe(STATUS_LIMITED_TILES);
+    } finally {
+      globalThis.Image = realImage;
+    }
+  });
+
+  it("stays on the still after it has decoded", () => {
+    HTMLElement.prototype.getBoundingClientRect = sizedRect;
+    window.history.replaceState({}, "", "/?farm=still");
+    const { FakeImage, images } = fakeImageClass();
+    const realImage = globalThis.Image;
+    globalThis.Image = FakeImage;
+    try {
+      const { container } = render(<App />);
+      const fail = images[0].onerror;
+
+      act(() => {
+        images[0].naturalWidth = 800;
+        images[0].onload();
+      });
+      act(() => {
+        fail();
+      });
+
+      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.jpg");
+      expect(container.querySelector(".bb-map__tile")).toBeNull();
+      expect(screen.getByRole("status").textContent).toBe("");
+    } finally {
+      globalThis.Image = realImage;
+    }
+  });
+
+  it("paints EOX tiles when the farm omits a still", () => {
+    HTMLElement.prototype.getBoundingClientRect = sizedRect;
+    const { FakeImage, images } = fakeImageClass();
+    const realImage = globalThis.Image;
+    globalThis.Image = FakeImage;
+    try {
+      const { container } = render(<App />);
+
+      expect(container.querySelector(".bb-map__tile").src).toContain("tiles.maps.eox.at");
+      expect(container.querySelector(".bb-map__image")).toBeNull();
+      expect(screen.getByRole("status").textContent).toBe(STATUS_LIMITED_TILES);
+      expect(images.some((img) => img.src.includes("tiles.maps.eox.at"))).toBe(true);
+      expect(images.some((img) => img.src === "/assets/farm-basemap.jpg")).toBe(false);
+    } finally {
+      globalThis.Image = realImage;
+    }
+  });
+
   it("keeps live tiles and shows the soft-fail line when the zoom-16 probe errors", () => {
     const { FakeImage, images } = fakeImageClass();
     const realImage = globalThis.Image;
