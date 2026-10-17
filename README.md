@@ -25,6 +25,7 @@ src/
   data/
     example-farm.json  sample farm: basemap slots, 4 sections, 21 hives (PLACEHOLDER coordinates)
     resolveBasemap.js  picks the satellite slot or the static fallback
+    resolveFarmView.js chooses where the camera looks from hive GPS, center, or bounds
     statusMap.js       turns your backend's hives into what the map expects
   Dashboard.jsx        the app's single screen
   App.jsx              loads the data — swap the example for your API here
@@ -79,15 +80,23 @@ The map shows free satellite imagery from EOX Sentinel-2 Cloudless 2025. No acco
 }
 ```
 
-`satellite` is the default. Keep EOX's `{z}/{y}/{x}` order. `maxZoom` stays 18 because this mosaic returns 404 at zoom 19. Zooming the map closer than 18 enlarges zoom-18 tiles. The app does not request empty zoom-19 tiles.
+`satellite` is the default. Keep EOX's `{z}/{y}/{x}` order. `maxZoom` stays 18 because this mosaic returns 404 at zoom 19. The map passes that 18 to HiveMap, so the plus button, the mouse wheel, and pinch stop at 18. Fit stops one level lower, at 17. The app does not request empty zoom-19 tiles.
 
-`fallback` is shown when one satellite tile cannot load at startup, for example when the browser is offline, the host is blocked, or the host rate-limits the request. A short line on the map says the live satellite is unavailable. Without a `fallback` slot, the map keeps its plain surface and the line does not mention a saved image.
+Tiles fade in over 0.35 seconds. When the reader prefers reduced motion, tiles appear at once. The app also preloads the centre tile at zoom 16 and the four tiles next to it. Markers stay visible while tiles arrive. There is no full-screen spinner.
+
+On startup the app requests one tile at zoom 16. That request does not block the dashboard. If it fails while tiles are on screen, or while they are still loading, the status line reads `Não foi possível confirmar o satélite. Mantendo o mapa ao vivo.` and the live tiles stay. The saved farm image replaces the tiles only when every tile image has already finished with no pixels. A failure after the first tile has painted does not switch to that image.
+
+`fallback` is that saved image. Without a `fallback` slot, a total tile failure keeps the plain map surface and the status line does not mention a saved image.
 
 Do not put `tiles` and `image` in the same slot. The app throws on startup if you do.
 
 When you move to a new mosaic year, change the year in `tiles` and in `attribution` together. Tests fail if the years disagree.
 
-EOX free mosaics for 2018 to 2025 are CC BY-NC-SA 4.0. Viewing your own farm is the intended free use. If the dashboard is sold, white-labeled, or run as a paid multi-tenant product, get an EOX commercial license or move to a paid provider first. Mapbox Satellite is an optional later upgrade, with a token from the environment and never committed. It is not part of v1.
+The farm object may also include hive GPS (`lat` / `lng`, or `latitude` / `longitude`), `center` as `[lat, lng]`, `bounds` as `[[south, west], [north, east]]`, and `address`. Hive GPS wins. The map fits those hives and does not take `center` or `zoom` from the payload. A hive with a null coordinate is skipped. `Number(null)` is 0, and that pin would sit at 0,0. With no hive GPS, `center` and `bounds` open the map between zoom 15 and 16, still capped by satellite `maxZoom`. Farm `bounds` are not copied onto the fallback image. That image box would clamp panning to the old photo. The browser does not geocode `address`. An empty `address` counts as absent. Send `center` or hive GPS from the backend when the map should open on a real place.
+
+`example-farm.json` keeps placeholder coordinates and an empty `address`. Do not commit a real street as the sample.
+
+EOX free mosaics for 2018 to 2025 are CC BY-NC-SA 4.0. Viewing your own farm is the intended free use. If the dashboard is sold, white-labeled, or run as a paid multi-tenant product, get an EOX commercial license or move to a paid provider first. Mapbox Satellite is an optional later upgrade, with a token from the environment and never committed. This version does not require it.
 
 ## Before going live
 

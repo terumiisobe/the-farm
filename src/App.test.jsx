@@ -2,12 +2,36 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App, { probeTile } from "./App.jsx";
 
-const PROBE_URL = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/18/149041/96857.jpg";
+const PROBE_URL = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37260/24214.jpg";
+const PRELOAD_URLS = [
+  PROBE_URL,
+  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37260/24215.jpg",
+  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37260/24213.jpg",
+  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37261/24214.jpg",
+  "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/16/37259/24214.jpg",
+];
 const STATUS_IMAGE = "Satélite ao vivo indisponível. Mostrando a imagem salva da propriedade.";
+const STATUS_SOFT = "Não foi possível confirmar o satélite. Mantendo o mapa ao vivo.";
+const realRect = HTMLElement.prototype.getBoundingClientRect;
+
+function sizedRect() {
+  return {
+    width: 800,
+    height: 600,
+    top: 0,
+    left: 0,
+    right: 800,
+    bottom: 600,
+    x: 0,
+    y: 0,
+    toJSON() { return {}; },
+  };
+}
 
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  HTMLElement.prototype.getBoundingClientRect = realRect;
 });
 
 function fakeImageClass() {
@@ -85,21 +109,69 @@ describe("probeTile", () => {
 });
 
 describe("App", () => {
-  it("shows the saved-image line after the startup tile errors and does not probe again", () => {
+  it("keeps live tiles and shows the soft-fail line when the zoom-16 probe errors", () => {
     const { FakeImage, images } = fakeImageClass();
     const realImage = globalThis.Image;
     globalThis.Image = FakeImage;
     try {
-      render(<App />);
-      expect(images.map((img) => img.src)).toEqual([PROBE_URL]);
+      const { container } = render(<App />);
+      expect(images.map((img) => img.src)).toEqual([PROBE_URL, ...PRELOAD_URLS]);
       expect(screen.getByRole("status").textContent).toBe("");
 
       act(() => {
         images[0].onerror();
       });
 
+      expect(screen.getByRole("status").textContent).toBe(STATUS_SOFT);
+      expect(container.querySelector(".bb-map__image")).toBeNull();
+      expect(images.map((img) => img.src)).toEqual([PROBE_URL, ...PRELOAD_URLS]);
+    } finally {
+      globalThis.Image = realImage;
+    }
+  });
+
+  it("keeps painted tiles up when the probe fails", () => {
+    HTMLElement.prototype.getBoundingClientRect = sizedRect;
+    const { FakeImage, images } = fakeImageClass();
+    const realImage = globalThis.Image;
+    globalThis.Image = FakeImage;
+    try {
+      const { container } = render(<App />);
+      const tile = container.querySelector(".bb-map__tile");
+      Object.defineProperty(tile, "complete", { value: true });
+      Object.defineProperty(tile, "naturalWidth", { value: 256 });
+
+      act(() => {
+        images[0].onerror();
+      });
+
+      expect(screen.getByRole("status").textContent).toBe(STATUS_SOFT);
+      expect(container.querySelector(".bb-map__image")).toBeNull();
+      expect(container.querySelector(".bb-map__tile").src).toContain("tiles.maps.eox.at");
+    } finally {
+      globalThis.Image = realImage;
+    }
+  });
+
+  it("shows the saved farm image when every tile has already failed", () => {
+    HTMLElement.prototype.getBoundingClientRect = sizedRect;
+    const { FakeImage, images } = fakeImageClass();
+    const realImage = globalThis.Image;
+    globalThis.Image = FakeImage;
+    try {
+      const { container } = render(<App />);
+      for (const tile of container.querySelectorAll(".bb-map__tile")) {
+        Object.defineProperty(tile, "complete", { value: true });
+        Object.defineProperty(tile, "naturalWidth", { value: 0 });
+      }
+
+      act(() => {
+        images[0].onerror();
+      });
+
       expect(screen.getByRole("status").textContent).toBe(STATUS_IMAGE);
-      expect(images.map((img) => img.src)).toEqual([PROBE_URL]);
+      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.jpg");
+      expect(container.querySelector(".bb-map__tile")).toBeNull();
     } finally {
       globalThis.Image = realImage;
     }

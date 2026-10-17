@@ -1,17 +1,22 @@
+import { pinLatLng } from "./statusMap.js";
+
 /** @typedef {import("../bombus/bombus").Basemap} Basemap */
 /** @typedef {import("../bombus/bombus").Hive} Hive */
 
 const STATUS_IMAGE = "Satélite ao vivo indisponível. Mostrando a imagem salva da propriedade.";
 const STATUS_NONE = "Satélite ao vivo indisponível no momento.";
+const STATUS_SOFT = "Não foi possível confirmar o satélite. Mantendo o mapa ao vivo.";
+export const PROBE_ZOOM = 16;
+const NEIGHBOURS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
 /**
  * Picks the one basemap HiveMap should paint, the one tile App should probe, and the status line.
  *
  * @param {unknown} config `farm.basemap` as committed, `{ satellite?, fallback? }`.
- * @param {{ hives?: Hive[], tilesFailed?: boolean }} [opts]
+ * @param {{ hives?: Hive[], tilesFailed?: boolean, softFail?: boolean }} [opts]
  * @returns {{ basemap: Basemap | undefined, probeUrl: string | null, status: string | null }}
  */
-export function resolveBasemap(config, { hives = [], tilesFailed = false } = {}) {
+export function resolveBasemap(config, { hives = [], tilesFailed = false, softFail = false } = {}) {
   const { satellite, fallback } = parseConfig(config);
   if (satellite && !tilesFailed) {
     const centre = farmCentre(hives, fallback);
@@ -22,8 +27,8 @@ export function resolveBasemap(config, { hives = [], tilesFailed = false } = {})
         maxZoom: satellite.maxZoom,
         attribution: satellite.attribution,
       },
-      probeUrl: centre ? tileUrl(satellite.tiles, centre, satellite.maxZoom) : null,
-      status: null,
+      probeUrl: centre ? tileUrl(satellite.tiles, centre, PROBE_ZOOM) : null,
+      status: softFail ? STATUS_SOFT : null,
     };
   }
   const failed = Boolean(satellite) && tilesFailed;
@@ -143,17 +148,16 @@ function imageBasemap(fallback) {
   return basemap;
 }
 
-function farmCentre(hives, fallback) {
+export function farmCentre(hives = [], fallback = null) {
   let minLat = Infinity;
   let maxLat = -Infinity;
   let minLng = Infinity;
   let maxLng = -Infinity;
   let count = 0;
   for (const hive of hives) {
-    if (hive == null) continue;
-    const lat = Number(hive.lat);
-    const lng = Number(hive.lng);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    const pin = pinLatLng(hive);
+    if (!pin) continue;
+    const [lat, lng] = pin;
     count += 1;
     if (lat < minLat) minLat = lat;
     if (lat > maxLat) maxLat = lat;
@@ -166,11 +170,32 @@ function farmCentre(hives, fallback) {
   return [(south + north) / 2, (west + east) / 2];
 }
 
-function tileUrl(template, [lat, lng], z) {
+function tileXY(lat, lng, z) {
   const n = 2 ** z;
   const clamped = Math.max(-85.0511, Math.min(85.0511, lat));
   const s = Math.sin((clamped * Math.PI) / 180);
   const x = Math.floor(((lng + 180) / 360) * n);
   const y = Math.floor((0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * n);
+  return { x, y, n };
+}
+
+function fillTemplate(template, z, x, y) {
   return template.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y)).replace("{s}", "a");
+}
+
+export function tileUrl(template, [lat, lng], z) {
+  const { x, y } = tileXY(lat, lng, z);
+  return fillTemplate(template, z, x, y);
+}
+
+export function preloadTileUrls(template, centre, z = PROBE_ZOOM) {
+  const { x, y, n } = tileXY(centre[0], centre[1], z);
+  const urls = [fillTemplate(template, z, x, y)];
+  for (const [dx, dy] of NEIGHBOURS) {
+    const nx = (x + dx + n) % n;
+    const ny = y + dy;
+    if (ny < 0 || ny >= n) continue;
+    urls.push(fillTemplate(template, z, nx, ny));
+  }
+  return urls;
 }

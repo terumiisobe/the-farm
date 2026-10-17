@@ -386,6 +386,8 @@
           var wx = ((tx % n) + n) % n;
           var url = basemap.tiles.replace("{z}", tz).replace("{x}", wx).replace("{y}", ty).replace("{s}", "abc"[(tx + ty) % 3 < 0 ? 0 : (tx + ty) % 3]);
           tiles.push(h("img", { key: tz + "/" + tx + "/" + ty, src: url, alt: "", draggable: false, className: "bb-map__tile",
+            ref: function (el) { if (el && el.complete && el.naturalWidth > 0) el.classList.add("is-loaded"); },
+            onLoad: function (e) { e.currentTarget.classList.add("is-loaded"); },
             style: { left: Math.round((tx - cxT) * ts + size.w / 2) + "px", top: Math.round((ty - cyT) * ts + size.h / 2) + "px", width: Math.ceil(ts) + 1 + "px", height: Math.ceil(ts) + 1 + "px" } }));
         }
         layers.push(h("div", { key: "tiles", className: "bb-map__tiles" }, tiles));
