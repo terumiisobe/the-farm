@@ -132,84 +132,94 @@ describe("probeTile", () => {
   });
 });
 
+function apiFarm(name, hives = [{
+  code: "12",
+  lat: -25.762152999999998,
+  lng: -49.189049499999996,
+  status: "stable",
+}]) {
+  return {
+    farmName: name,
+    address: "",
+    updatedAt: null,
+    hives,
+  };
+}
+
+async function renderApiFarm(name, images) {
+  vi.stubGlobal("fetch", async () => snapshotResponse(apiFarm(name)));
+  const view = render(<App source={API} />);
+  await screen.findByRole("heading", { level: 1, name });
+  return view;
+}
+
+async function forceEox(images) {
+  const still = images.find((img) => img.src === "/assets/farm-basemap.png");
+  expect(still).toBeTruthy();
+  const fail = still.onerror;
+  expect(typeof fail).toBe("function");
+  act(() => {
+    fail();
+  });
+  act(() => {
+    fail();
+  });
+}
+
 describe("App", () => {
-  it("paints the example farm still on the first frame without a request", () => {
-    HTMLElement.prototype.getBoundingClientRect = sizedRect;
+  it("fails closed without API env instead of shipping a mock farm", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
     const fetchImpl = vi.fn(() => new Promise(() => {}));
     vi.stubGlobal("fetch", fetchImpl);
-    return withFakeImage((images) => {
-      const { container } = render(<App />);
-      expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Meliponário Isobe");
-      expect(screen.queryByText("Carregando colmeias…")).toBeNull();
-      expect(fetchImpl.mock.calls).toEqual([]);
-      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.png");
-      expect(container.querySelector(".bb-map__tile")).toBeNull();
-      expect(screen.getByRole("status").textContent).toBe("");
-      expect(images.map((img) => img.src)).toEqual(["/assets/farm-basemap.png"]);
-    });
+    render(<App />);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Bombus");
+    expect(screen.getByRole("alert").textContent).toBe("Não foi possível carregar as colmeias agora.");
+    expect(fetchImpl.mock.calls).toEqual([]);
   });
 
-  it("falls back to EOX once when the still fails before it decodes", () => {
-    HTMLElement.prototype.getBoundingClientRect = sizedRect;
-    return withFakeImage((images) => {
-      const { container } = render(<App />);
-      const fail = images[0].onerror;
-      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.png");
-
-      act(() => {
-        fail();
-      });
-      act(() => {
-        fail();
-      });
-
-      expect(container.querySelector(".bb-map__image")).toBeNull();
-      expect(container.querySelector(".bb-map__tile").src).toContain("tiles.maps.eox.at");
-      expect(screen.getByRole("status").textContent).toBe(STATUS_LIMITED_TILES);
-    });
-  });
-
-  it("stays on the still after it has decoded", () => {
-    HTMLElement.prototype.getBoundingClientRect = sizedRect;
-    return withFakeImage((images) => {
-      const { container } = render(<App />);
-      const fail = images[0].onerror;
-
-      act(() => {
-        images[0].naturalWidth = 800;
-        images[0].onload();
-      });
-      act(() => {
-        fail();
-      });
-
-      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.png");
-      expect(container.querySelector(".bb-map__tile")).toBeNull();
-      expect(screen.getByRole("status").textContent).toBe("");
-    });
-  });
-
-  it("paints EOX tiles when the API farm omits a still", async () => {
+  it("paints the operator still for an API farm that omits basemap", async () => {
     HTMLElement.prototype.getBoundingClientRect = sizedRect;
     return withFakeImage(async (images) => {
-      vi.stubGlobal("fetch", async () => snapshotResponse({
-        farmName: "Sítio Sem Still",
-        address: "",
-        updatedAt: null,
-        hives: [{
-          code: "12",
-          lat: -25.762152999999998,
-          lng: -49.189049499999996,
-          status: "stable",
-        }],
-      }));
-      const { container } = render(<App source={API} />);
+      const { container } = await renderApiFarm("Sítio Sem Still", images);
+      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.png");
+      expect(container.querySelector(".bb-map__tile")).toBeNull();
+      expect(screen.getByRole("status").textContent).toBe("");
+      expect(images.map((img) => img.src)).toContain("/assets/farm-basemap.png");
+    });
+  });
 
-      expect(await screen.findByRole("heading", { level: 1, name: "Sítio Sem Still" })).toBeTruthy();
-      expect(container.querySelector(".bb-map__tile").src).toContain("tiles.maps.eox.at");
+  it("falls back to EOX once when the still fails before it decodes", async () => {
+    HTMLElement.prototype.getBoundingClientRect = sizedRect;
+    return withFakeImage(async (images) => {
+      const { container } = await renderApiFarm("Sítio Still Fail", images);
+      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.png");
+
+      await forceEox(images);
+
       expect(container.querySelector(".bb-map__image")).toBeNull();
+      expect(container.querySelector(".bb-map__tile").src).toContain("tiles.maps.eox.at");
       expect(screen.getByRole("status").textContent).toBe(STATUS_LIMITED_TILES);
-      expect(images.some((img) => img.src.includes("tiles.maps.eox.at"))).toBe(true);
+    });
+  });
+
+  it("stays on the still after it has decoded", async () => {
+    HTMLElement.prototype.getBoundingClientRect = sizedRect;
+    return withFakeImage(async (images) => {
+      const { container } = await renderApiFarm("Sítio Still Ok", images);
+      const still = images.find((img) => img.src === "/assets/farm-basemap.png");
+      const fail = still.onerror;
+
+      act(() => {
+        still.naturalWidth = 800;
+        still.onload();
+      });
+      act(() => {
+        fail();
+      });
+
+      expect(container.querySelector(".bb-map__image").getAttribute("src")).toBe("/assets/farm-basemap.png");
+      expect(container.querySelector(".bb-map__tile")).toBeNull();
+      expect(screen.getByRole("status").textContent).toBe("");
     });
   });
 
@@ -217,15 +227,7 @@ describe("App", () => {
     HTMLElement.prototype.getBoundingClientRect = sizedRect;
     return withFakeImage(async (images) => {
       vi.stubGlobal("fetch", async () => snapshotResponse({
-        farmName: "Sítio Still",
-        address: "",
-        updatedAt: null,
-        hives: [{
-          code: "12",
-          lat: -25.762152999999998,
-          lng: -49.189049499999996,
-          status: "stable",
-        }],
+        ...apiFarm("Sítio Still"),
         basemap: {
           image: "/assets/farm-basemap.png",
           bounds: STILL_BOUNDS,
@@ -245,19 +247,8 @@ describe("App", () => {
   it("keeps live tiles and shows the soft-fail line when the zoom-16 probe errors", async () => {
     HTMLElement.prototype.getBoundingClientRect = sizedRect;
     return withFakeImage(async (images) => {
-      vi.stubGlobal("fetch", async () => snapshotResponse({
-        farmName: "Sítio EOX",
-        address: "",
-        updatedAt: null,
-        hives: [{
-          code: "12",
-          lat: -25.762152999999998,
-          lng: -49.189049499999996,
-          status: "stable",
-        }],
-      }));
-      const { container } = render(<App source={API} />);
-      await screen.findByRole("heading", { level: 1, name: "Sítio EOX" });
+      const { container } = await renderApiFarm("Sítio EOX", images);
+      await forceEox(images);
 
       expect(images.some((img) => img.src === PROBE_URL)).toBe(true);
       expect(screen.getByRole("status").textContent).toBe(STATUS_LIMITED_TILES);
@@ -276,19 +267,8 @@ describe("App", () => {
   it("keeps painted tiles up when the probe fails", async () => {
     HTMLElement.prototype.getBoundingClientRect = sizedRect;
     return withFakeImage(async (images) => {
-      vi.stubGlobal("fetch", async () => snapshotResponse({
-        farmName: "Sítio EOX",
-        address: "",
-        updatedAt: null,
-        hives: [{
-          code: "12",
-          lat: -25.762152999999998,
-          lng: -49.189049499999996,
-          status: "stable",
-        }],
-      }));
-      const { container } = render(<App source={API} />);
-      await screen.findByRole("heading", { level: 1, name: "Sítio EOX" });
+      const { container } = await renderApiFarm("Sítio EOX", images);
+      await forceEox(images);
       const tile = container.querySelector(".bb-map__tile");
       Object.defineProperty(tile, "complete", { value: true });
       Object.defineProperty(tile, "naturalWidth", { value: 256 });
@@ -307,19 +287,8 @@ describe("App", () => {
   it("shows the saved farm image when every tile has already failed", async () => {
     HTMLElement.prototype.getBoundingClientRect = sizedRect;
     return withFakeImage(async (images) => {
-      vi.stubGlobal("fetch", async () => snapshotResponse({
-        farmName: "Sítio EOX",
-        address: "",
-        updatedAt: null,
-        hives: [{
-          code: "12",
-          lat: -25.762152999999998,
-          lng: -49.189049499999996,
-          status: "stable",
-        }],
-      }));
-      const { container } = render(<App source={API} />);
-      await screen.findByRole("heading", { level: 1, name: "Sítio EOX" });
+      const { container } = await renderApiFarm("Sítio EOX", images);
+      await forceEox(images);
       for (const tile of container.querySelectorAll(".bb-map__tile")) {
         Object.defineProperty(tile, "complete", { value: true });
         Object.defineProperty(tile, "naturalWidth", { value: 0 });

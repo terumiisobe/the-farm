@@ -77,7 +77,20 @@ const FAILED = {
   unavailable: Object.freeze({ phase: "failed", reason: "unavailable" }),
 };
 
-/** Local EOX + sample arms. Still comes from the snapshot when present. */
+/** Operator still corners (SW / NE). Used when the GET snapshot omits basemap.image. */
+export const OPERATOR_STILL_BOUNDS = Object.freeze([
+  Object.freeze([-25.762684, -49.189889]),
+  Object.freeze([-25.761622, -49.188210]),
+]);
+
+/** Local still painted under API hives when the snapshot has no farm picture. */
+export const OPERATOR_STILL = Object.freeze({
+  image: "/assets/farm-basemap.png",
+  bounds: OPERATOR_STILL_BOUNDS,
+  attribution: "Imagem da propriedade",
+});
+
+/** Local EOX + sample arms. Still defaults to OPERATOR_STILL when the snapshot omits one. */
 export const LOCAL_FARM_BASEMAP = Object.freeze({
   satellite: example.basemap.satellite,
   fallback: example.basemap.fallback,
@@ -91,7 +104,12 @@ let cachedExample;
  */
 export function readFarmSource(env) {
   const base = typeof env?.VITE_API_BASE_URL === "string" ? env.VITE_API_BASE_URL.trim() : "";
-  if (!base) return { kind: "example" };
+  if (!base) {
+    return {
+      kind: "misconfigured",
+      problem: "VITE_API_BASE_URL is required",
+    };
+  }
 
   const id = digits(env.VITE_MELIPONARIO_ID);
   const userId = digits(env.VITE_USER_ID);
@@ -239,17 +257,14 @@ export function readyFarmFromParsed(parsed, options) {
  * @param {StillOverlay | null} still
  */
 export function composeFarmBasemapWire(local, still) {
-  const wire = {
+  const overlay = still == null ? OPERATOR_STILL : still;
+  return {
     satellite: local.satellite,
     fallback: local.fallback,
-  };
-  if (still == null) return wire;
-  return {
-    ...wire,
-    image: still.image,
-    bounds: still.bounds,
-    ...(still.attribution != null ? { attribution: still.attribution } : {}),
-    ...(still.alt != null ? { alt: still.alt } : {}),
+    image: overlay.image,
+    bounds: overlay.bounds,
+    ...(overlay.attribution != null ? { attribution: overlay.attribution } : {}),
+    ...(overlay.alt != null ? { alt: overlay.alt } : {}),
   };
 }
 

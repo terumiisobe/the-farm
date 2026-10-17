@@ -3,7 +3,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import example from "./example-farm.json";
-import stillFarm from "./mock-still-farm.json";
+import { OPERATOR_STILL, OPERATOR_STILL_BOUNDS, readFarmSource } from "./farmSnapshot.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const STREET = /\b(Rua|Avenida|Av\.|Rodovia|Alameda|Travessa|Estrada)\b/i;
@@ -23,7 +23,7 @@ function productFiles(dir, found = []) {
 }
 
 describe("shipped defaults", () => {
-  it("keeps the sample address empty and out of street form", () => {
+  it("keeps the fixture address empty and out of street form", () => {
     expect(example.address).toBe("");
     expect(STREET.test("Rua Exemplo 10")).toBe(true);
 
@@ -32,25 +32,31 @@ describe("shipped defaults", () => {
     expect(hits).toEqual([]);
   });
 
-  it("ships the default example on the operator still box with EOX as fallback", () => {
-    expect(example.address).toBe("");
+  it("ships the operator still defaults and does not default the app to a mock farm", () => {
+    expect(OPERATOR_STILL.image).toBe("/assets/farm-basemap.png");
+    expect(OPERATOR_STILL.bounds).toEqual(OPERATOR_STILL_BOUNDS);
+    expect(OPERATOR_STILL_BOUNDS).toEqual([
+      [-25.762684, -49.189889],
+      [-25.761622, -49.188210],
+    ]);
     expect(example.basemap.image).toBe("/assets/farm-basemap.png");
+    expect(example.basemap.bounds).toEqual([
+      [-25.762684, -49.189889],
+      [-25.761622, -49.188210],
+    ]);
     expect(example.basemap.satellite.tiles).toContain("tiles.maps.eox.at");
-    expect(example.basemap.fallback.image).toBe("/assets/farm-basemap.png");
-    expect(stillFarm.address).toBe("");
-    expect(stillFarm.basemap.image).toBe("/assets/farm-basemap.png");
+    expect(readFarmSource({})).toEqual({
+      kind: "misconfigured",
+      problem: "VITE_API_BASE_URL is required",
+    });
+  });
 
-    for (const farm of [example, stillFarm]) {
-      const [[south, west], [north, east]] = farm.basemap.bounds;
-      expect(south).toBeLessThan(north);
-      expect(west).toBeLessThan(east);
-      expect(farm.hives.length).toBeGreaterThan(0);
-      for (const hive of farm.hives) {
-        expect(hive.lat).toBeGreaterThanOrEqual(south);
-        expect(hive.lat).toBeLessThanOrEqual(north);
-        expect(hive.lng).toBeGreaterThanOrEqual(west);
-        expect(hive.lng).toBeLessThanOrEqual(east);
-      }
-    }
+  it("does not ship mock farm harness files or the old JPEG placeholder", () => {
+    const data = readdirSync(join(root, "src/data"));
+    expect(data).not.toContain("mock-still-farm.json");
+    expect(data).not.toContain("mock-eox-farm.json");
+    const assets = readdirSync(join(root, "public/assets"));
+    expect(assets).toContain("farm-basemap.png");
+    expect(assets).not.toContain("farm-basemap.jpg");
   });
 });

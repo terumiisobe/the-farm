@@ -46,10 +46,19 @@ function silenceErrors() {
 }
 
 describe("readFarmSource", () => {
-  it("uses the bundled example when the base URL is unset", () => {
-    expect(readFarmSource({})).toEqual({ kind: "example" });
-    expect(readFarmSource({ VITE_API_BASE_URL: "  " })).toEqual({ kind: "example" });
-    expect(readFarmSource({ VITE_API_BASE_URL: undefined })).toEqual({ kind: "example" });
+  it("requires the API base URL instead of shipping a mock farm", () => {
+    expect(readFarmSource({})).toEqual({
+      kind: "misconfigured",
+      problem: "VITE_API_BASE_URL is required",
+    });
+    expect(readFarmSource({ VITE_API_BASE_URL: "  " })).toEqual({
+      kind: "misconfigured",
+      problem: "VITE_API_BASE_URL is required",
+    });
+    expect(readFarmSource({ VITE_API_BASE_URL: undefined })).toEqual({
+      kind: "misconfigured",
+      problem: "VITE_API_BASE_URL is required",
+    });
   });
 
   it("builds the meliponary URL when all three vars are digits and an origin", () => {
@@ -89,7 +98,7 @@ describe("readFarmSource", () => {
 });
 
 describe("loadFarm", () => {
-  it("parses the example file into a ready farm with its sections and still", async () => {
+  it("parses the fixture example file when tests pass kind example", async () => {
     const source = { kind: "example" };
     const load = await loadFarm(source);
 
@@ -259,7 +268,7 @@ describe("loadFarm", () => {
     expect(readyFarmFromParsed(parsed, {
       localBasemap: LOCAL_FARM_BASEMAP,
       sections: [],
-    }).basemap.image).toBeUndefined();
+    }).basemap).toEqual(composeFarmBasemapWire(LOCAL_FARM_BASEMAP, null));
   });
 
   it("returns unauthorized for 401 and not-found for 404", async () => {

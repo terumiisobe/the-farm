@@ -92,7 +92,7 @@ describe("Dashboard", () => {
   });
 
   it("uses a dark green letterbox behind the map surface", () => {
-    const { container } = render(<Dashboard {...farm} />);
+    const { container } = show();
     const stage = container.querySelector(".map-stage");
     const map = container.querySelector(".bb-map");
 
