@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { HiveDetails, HiveMap } from "./index.js";
+import { BotLink, HiveDetails, HiveMap } from "./index.js";
 
 const hive = {
   code: "1",
@@ -182,6 +182,16 @@ describe("HiveDetails type scale and status layout", () => {
     expect(px(getComputedStyle(scale).fontSize)).toBe(12);
     expect(getComputedStyle(ctl).width).toBe("40px");
     expect(getComputedStyle(ctl).height).toBe("40px");
+  });
+
+  // Pre-a11y BotLink baseline (main): title 17/22 — details CSS must not enlarge WhatsApp.
+  it("keeps BotLink WhatsApp title at previous size", () => {
+    const { container } = render(<BotLink href="https://wa.me/1" title="WhatsApp" />);
+    const title = container.querySelector(".bb-botlink__title");
+    expect(title).toBeTruthy();
+    expect(px(getComputedStyle(title).fontSize)).toBe(17);
+    expect(px(getComputedStyle(title).lineHeight)).toBe(22);
+    expect(getComputedStyle(container.querySelector(".bb-botlink")).minHeight).toBe("44px");
   });
 
   it("keeps Fechar callable when onClose is passed", () => {
