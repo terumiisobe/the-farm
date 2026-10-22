@@ -7,7 +7,7 @@ description: "Prove Bombus dashboard UI changes by launching the Vite app, drivi
 
 Drive the **Bombus** React 18 + Vite farm dashboard the way a user does: launch the real app, exercise mapped features, capture proof. Read this cold mid-task — do not invent alternate ports, fixtures, or selectors.
 
-Desktop-first. Single screen: slim farm-name header with WhatsApp, view-only hive map filling the rest of the viewport (no page scroll). Sample data from `src/data/example-farm.json` (4 setores, 21 colmeias).
+Desktop-first. Single screen: slim farm-name header with WhatsApp, view-only hive map filling the rest of the viewport (no page scroll). The app loads farm data via `GET /v1/meliponarios/{id}`. For verification, `control-app launch` starts a local mock of that GET (from `src/data/example-farm.json`: 4 setores, 21 colmeias, operator still) so doctor/drive do not need Render CORS.
 
 ## Launch
 
@@ -23,10 +23,10 @@ control-app doctor
 ```
 
 - Installs app deps (`npm install` at repo root) and harness deps (skill-local `playwright-core`) if missing.
-- Starts Vite via the skill script (`node node_modules/vite/bin/vite.js --host 127.0.0.1 --port $CONTROL_APP_PORT --strictPort`) so cleanup can stop the recorded pid without orphaning an npm wrapper.
+- Starts a local mock API (`CONTROL_APP_MOCK_BASE_URL`, default `http://127.0.0.1:8791`) and Vite with `VITE_API_BASE_URL` / `VITE_MELIPONARIO_ID` / `VITE_USER_ID` pointed at that mock (`node node_modules/vite/bin/vite.js --host 127.0.0.1 --port $CONTROL_APP_PORT --strictPort`) so cleanup can stop the recorded pids without orphaning an npm wrapper.
 - Ready means `/` returns HTML with `#root` **and** `doctor` sees heading `Meliponário Isobe`, no Bombus product mark, the map, WhatsApp in the header, and no page scroll — not merely that a port answers.
-- State lives under `/tmp/control-app-$CONTROL_APP_RUN_ID/` (pid, log, URL). Never drive an instance you did not launch for this run.
-- Isolation: pick a free `CONTROL_APP_PORT` per concurrent run. `--strictPort` refuses to steal another process's port. This app has no server-side data dir; sample farm JSON is bundled.
+- State lives under `/tmp/control-app-$CONTROL_APP_RUN_ID/` (vite pid, mock pid, log, URL). Never drive an instance you did not launch for this run.
+- Isolation: pick a free `CONTROL_APP_PORT` (and free `CONTROL_APP_MOCK_PORT` if needed) per concurrent run. `--strictPort` refuses to steal another process's port.
 - Teardown: `control-app cleanup` (see Cleanup).
 
 ## Doctor
@@ -98,7 +98,7 @@ Override with `CONTROL_APP_ARTIFACTS` if needed. Proof standards:
 control-app cleanup
 ```
 
-Stops **only** the pid recorded for this `CONTROL_APP_RUN_ID` (and any process still bound to that run's port). Removes scratch under `/tmp/control-app-$CONTROL_APP_RUN_ID/`. **Does not** delete `$CONTROL_APP_ARTIFACTS`. After cleanup, confirm evidence files still exist at the named paths.
+Stops **only** the Vite and mock-API pids recorded for this `CONTROL_APP_RUN_ID` (and tears down the browser daemon). Removes scratch under `/tmp/control-app-$CONTROL_APP_RUN_ID/`. **Does not** delete `$CONTROL_APP_ARTIFACTS`. After cleanup, confirm evidence files still exist at the named paths.
 
 Never `pkill -f vite` / kill by process name — that can destroy another agent's instance.
 

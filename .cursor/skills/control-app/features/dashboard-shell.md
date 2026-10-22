@@ -28,6 +28,7 @@ Preconditions:
 
 ## Gotchas
 
-- Before `App` finishes loading sample data the root renders nothing (`null`). Wait for `h1`, not only `#root`.
+- While the farm GET is in flight the heading may briefly read `Bombus`. Wait for farm heading `Meliponário Isobe`, not any `h1`.
 - Do not expect setores/colmeias/atualizado in the header. Hive counts live in the map legend.
 - Document title may still say `Bombus`; that is not on-screen chrome.
+- Launch uses the skill mock API. Without launch (or with only Render CORS broken), the unavailable alert appears instead of the farm shell.

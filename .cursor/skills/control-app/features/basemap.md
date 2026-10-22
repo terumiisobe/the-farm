@@ -1,33 +1,32 @@
 # Basemap
 
-The hive map paints a farm still on `/?farm=still`, and free EOX tiles on `/`.
+The hive map paints the farm still by default (operator PNG + SW/NE bounds from the GET snapshot, or the local operator still when the snapshot omits a picture). EOX tiles appear only if that still fails to decode.
 
 ## Sub-features
 
-- `basemap-still` paints `.bb-map__image` from `/assets/farm-basemap.jpg` and leaves the status line empty.
-- `basemap-eox` paints `.bb-map__tile` from `tiles.maps.eox.at` and shows the limited-imagery status.
+- `basemap-still` paints `.bb-map__image` from `/assets/farm-basemap.png` and leaves the status line empty.
+- `basemap-eox` paints `.bb-map__tile` from `tiles.maps.eox.at` after a still decode failure (no control-app hook to force that path).
 
 ## How to get to it (user POV)
 
-- Open `/` for the bundled example farm. That payload has no still, so the basemap is EOX.
-- Open `/?farm=still` for `src/data/mock-still-farm.json`. That payload includes the sharp still, matching bounds, and hive GPS inside those bounds.
+- Open `/` with a healthy farm load (control-app launch starts a local mock GET). The snapshot includes or inherits the operator still, so the basemap is the still.
+- There is no `/?farm=still` fixture route.
 
 ## Driving it with control-app
 
 Preconditions:
 
 - Bombus is healthy at `CONTROL_APP_BASE_URL`.
-- `control-app doctor` has passed on `/`. Doctor does not open the still fixture.
-- `public/assets/farm-basemap.jpg` is the file the still mock points at.
+- `control-app doctor` has passed on `/`.
+- `public/assets/farm-basemap.png` is present.
 
-- **See EOX on the default farm.** Load the root page. Run `control-app browser goto --path /` and `control-app browser wait --role application --name "/Mapa das colmeias/"`. Run `control-app browser eval --js "({tile:!!document.querySelector('.bb-map__tile'), image:!!document.querySelector('.bb-map__image'), status:document.querySelector('p.map-status').textContent})"`. `tile` is true, `image` is false, and `status` is `Sem imagem da propriedade. Mostrando satélite com detalhe limitado.` Run `control-app browser screenshot --path "$CONTROL_APP_ARTIFACTS/basemap/eox-fallback.png"`. The shot shows EOX tiles under the farm header.
-- **See the still.** Load the still fixture. Run `control-app browser goto --path "/?farm=still"` and `control-app browser wait --role application --name "/Mapa das colmeias/"`. Run `control-app browser eval --js "({tile:!!document.querySelector('.bb-map__tile'), src:document.querySelector('.bb-map__image')&&document.querySelector('.bb-map__image').getAttribute('src'), status:document.querySelector('p.map-status').textContent})"`. `tile` is false, `src` is `/assets/farm-basemap.jpg`, and `status` is empty. Run `control-app browser screenshot --path "$CONTROL_APP_ARTIFACTS/basemap/still-primary.png"`. The shot shows the still under the farm header, with hive markers on it.
+- **See the still.** Load the root page. Run `control-app browser goto --path /` and `control-app browser wait --role application --name "/Mapa das colmeias/"`. Run `control-app browser eval --js "({tile:!!document.querySelector('.bb-map__tile'), src:document.querySelector('.bb-map__image')&&document.querySelector('.bb-map__image').getAttribute('src'), status:(document.querySelector('p.map-status')||{}).textContent||''})"`. `tile` is false, `src` is `/assets/farm-basemap.png`, and `status` is empty. Run `control-app browser screenshot --path "$CONTROL_APP_ARTIFACTS/basemap/still-primary.png"`. The shot shows the still under the farm header, with hive markers on it.
+- **EOX fallback (`basemap-eox`).** Not driveable in this harness: there is no request-block or still-fail action. Treat as verified-unreachable unless product adds a fail hook. Do not use a removed `farm=still` query.
 
 ## Gotchas
 
-- Use `/` for the EOX check. That URL loads `src/data/example-farm.json`. Use `/?farm=still` for the still check. That URL loads `src/data/mock-still-farm.json`.
-- The harness has no request-block action. Prove EOX by omitting the still. Do not try to block `tiles.maps.eox.at`.
-- `.bb-map__image` is a georeferenced picture. `.bb-map__tile` is an EOX tile. On these two URLs the sample image in `basemap.fallback` stays unused.
-- An empty status on `/` means the still path ran. The healthy EOX status is the limited-imagery sentence above.
-- Doctor stays on `/`. It still expects heading `Meliponário Isobe`, the map, header WhatsApp, and no page scroll.
-- Hive 1 on the still fixture is `Colmeia 1, Estável`. The mock reuses the placeholder hive list, and every pin sits inside the still bounds.
+- Launch points Vite at the skill mock API (`CONTROL_APP_MOCK_BASE_URL`). Do not expect Render CORS for doctor/drive.
+- `.bb-map__image` is the georeferenced still. `.bb-map__tile` is an EOX tile.
+- An empty status on `/` means the still path ran. The limited-imagery status sentence appears only after still failure.
+- Doctor stays on `/`. It expects heading `Meliponário Isobe`, the map, header WhatsApp, and no page scroll.
+- Hive 1 on the mock snapshot is `Colmeia 1, Estável`.

@@ -1,9 +1,10 @@
 - banner:
   - heading "Meliponário Isobe" [level=1]
-  - paragraph: 4 setores · 21 colmeias · atualizado em 13/10/2026
-  - text: Bombus por Meliponário Isobe
+  - link "WhatsApp (abre o WhatsApp em uma nova aba)":
+    - /url: https://wa.me/
+    - text: WhatsApp
+- status
 - application "Mapa das colmeias. Arraste para mover, role ou use + e − para zoom, setas para mover, 0 para enquadrar.":
-  - img "Imagem de satélite da propriedade"
   - button "Colmeia 2, Estável": "2"
   - button "Colmeia 1, Estável" [pressed]: "1"
   - button "Colmeia 17, Estável": "17"
@@ -25,7 +26,7 @@
   - button "Colmeia 10, Recuperando": "10"
   - button "Colmeia 11, Estável": "11"
   - button "Colmeia 12, Vendida": "12"
-- button "Mapa das colmeias 21 colmeias" [expanded]
+- button "21 colmeias" [expanded]
 - list:
   - listitem:
     - button "Estável 13" [pressed]
@@ -41,16 +42,13 @@
   - button "Aproximar"
   - button "Afastar"
   - button "Enquadrar todas as colmeias"
-- text: "Imagem de satélite: exemplo · coordenadas ilustrativas"
+- text: Imagem da propriedade
 - region "Detalhes da colmeia 1":
   - text: Colmeia 1 Estável
   - button "Fechar detalhes"
   - term: Adicionada em
   - definition: 14/08/2024
   - term: Última revisão em
-  - definition: 05/10/2026 · há 8 dias
+  - definition: 05/10/2026 · há 12 dias
   - text: Notas
   - paragraph: Sem notas.
-- link "Gerencie suas colmeias pelo WhatsApp (abre o WhatsApp em uma nova aba)":
-  - /url: https://wa.me/
-  - text: Gerencie suas colmeias pelo WhatsApp
