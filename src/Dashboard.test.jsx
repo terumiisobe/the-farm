@@ -73,6 +73,33 @@ describe("Dashboard", () => {
     expect(style.minHeight).toBe("44px");
   });
 
+  // Farm name: smaller than main, scoped under .top (15/20). WhatsApp stays 17/22.
+  it("keeps a compact page header and WhatsApp at previous title size", () => {
+    const { container } = show();
+    const top = container.querySelector("header.top");
+    const farmName = container.querySelector(".top h1");
+    const wa = container.querySelector("a.wa-header");
+    const waTitle = container.querySelector(".wa-header .bb-botlink__title");
+
+    expect(top).toBeTruthy();
+    expect(farmName).toBeTruthy();
+    expect(wa).toBeTruthy();
+    expect(waTitle).toBeTruthy();
+
+    expect(getComputedStyle(top).minHeight).toBe("68px");
+
+    const farmStyle = getComputedStyle(farmName);
+    expect(farmStyle.fontSize).toBe("15px");
+    expect(farmStyle.lineHeight).toBe("20px");
+
+    const waTitleStyle = getComputedStyle(waTitle);
+    expect(waTitleStyle.fontSize).toBe("17px");
+    expect(waTitleStyle.lineHeight).toBe("22px");
+
+    const waStyle = getComputedStyle(wa);
+    expect(waStyle.minHeight).toBe("44px");
+  });
+
   it("keeps an empty basemap status before the map until a failure line is set", () => {
     const failure = "Satélite ao vivo indisponível. Mostrando a imagem salva da propriedade.";
     const { rerender, container } = show();
