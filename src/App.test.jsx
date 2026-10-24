@@ -316,7 +316,7 @@ describe("App", () => {
     expect(header.contains(status)).toBe(false);
     expect(header.contains(link)).toBe(true);
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Bombus");
-    expect(link.getAttribute("href")).toBe("https://wa.me/");
+    expect(link.getAttribute("href")).toBe("https://wa.me/5541987414789");
   });
 
   it("keeps WhatsApp reachable when the farm is missing and does not offer a retry", async () => {
@@ -326,7 +326,7 @@ describe("App", () => {
     expect((await screen.findByRole("alert")).textContent).toBe(
       "Não encontramos este meliponário ou você não tem acesso a ele.",
     );
-    expect(screen.getByRole("link", { name: WHATSAPP_NAME }).getAttribute("href")).toBe("https://wa.me/");
+    expect(screen.getByRole("link", { name: WHATSAPP_NAME }).getAttribute("href")).toBe("https://wa.me/5541987414789");
     expect(screen.queryByRole("button", { name: "Tentar novamente" })).toBeNull();
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Bombus");
   });
@@ -338,7 +338,7 @@ describe("App", () => {
     expect((await screen.findByRole("alert")).textContent).toBe(
       "Não foi possível confirmar seu acesso a este meliponário.",
     );
-    expect(screen.getByRole("link", { name: WHATSAPP_NAME }).getAttribute("href")).toBe("https://wa.me/");
+    expect(screen.getByRole("link", { name: WHATSAPP_NAME }).getAttribute("href")).toBe("https://wa.me/5541987414789");
     expect(screen.queryByRole("button", { name: "Tentar novamente" })).toBeNull();
   });
 
@@ -354,7 +354,7 @@ describe("App", () => {
     expect((await screen.findByRole("alert")).textContent).toBe(
       "Não foi possível carregar as colmeias agora.",
     );
-    expect(screen.getByRole("link", { name: WHATSAPP_NAME }).getAttribute("href")).toBe("https://wa.me/");
+    expect(screen.getByRole("link", { name: WHATSAPP_NAME }).getAttribute("href")).toBe("https://wa.me/5541987414789");
     expect(calls).toBe(1);
 
     fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
@@ -386,7 +386,7 @@ describe("App", () => {
 
       expect((await screen.findByRole("heading", { level: 1, name: "Sítio Norte" })).textContent).toBe("Sítio Norte");
       expect(screen.getByText("1 colmeia").textContent).toBe("1 colmeia");
-      expect(screen.getByRole("link", { name: WHATSAPP_NAME }).getAttribute("href")).toBe("https://wa.me/");
+      expect(screen.getByRole("link", { name: WHATSAPP_NAME }).getAttribute("href")).toBe("https://wa.me/5541987414789");
       expect(screen.queryByRole("alert")).toBeNull();
       expect(seen).toEqual({
         url: "https://api.test/v1/meliponarios/10",

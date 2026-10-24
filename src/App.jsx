@@ -10,7 +10,7 @@ import { loadFarm, LOADING, localFarmLoad, readFarmSource } from "./data/farmSna
 import { farmViewKey, resolveFarmView } from "./data/resolveFarmView.js";
 import { pinLatLng } from "./data/statusMap.js";
 
-const WHATSAPP_URL = "https://wa.me/";
+const WHATSAPP_URL = "https://wa.me/5541987414789";
 const PROBE_TIMEOUT_MS = 8000;
 const PRELOAD_NEIGHBOUR_TILES = false;
 const SOURCE = readFarmSource(import.meta.env);
