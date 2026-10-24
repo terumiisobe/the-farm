@@ -178,7 +178,7 @@ describe("HiveDetails type scale and status layout", () => {
     expect(ctl).toBeTruthy();
 
     expect(px(getComputedStyle(markerCode).fontSize)).toBe(12);
-    expect(px(getComputedStyle(legendChip).fontSize)).toBe(14);
+    expect(px(getComputedStyle(legendChip).fontSize)).toBe(17);
     expect(px(getComputedStyle(scale).fontSize)).toBe(12);
     expect(getComputedStyle(ctl).width).toBe("40px");
     expect(getComputedStyle(ctl).height).toBe("40px");

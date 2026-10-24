@@ -73,8 +73,8 @@ describe("Dashboard", () => {
     expect(style.minHeight).toBe("44px");
   });
 
-  // Farm name: smaller than main, scoped under .top (15/20). WhatsApp stays 17/22.
-  it("keeps a compact page header and WhatsApp at previous title size", () => {
+  // Farm name: 20/24 under .top; band stays 68px. WhatsApp stays 17/22.
+  it("keeps a readable farm name in the 68px header and WhatsApp at previous title size", () => {
     const { container } = show();
     const top = container.querySelector("header.top");
     const farmName = container.querySelector(".top h1");
@@ -89,8 +89,8 @@ describe("Dashboard", () => {
     expect(getComputedStyle(top).minHeight).toBe("68px");
 
     const farmStyle = getComputedStyle(farmName);
-    expect(farmStyle.fontSize).toBe("15px");
-    expect(farmStyle.lineHeight).toBe("20px");
+    expect(farmStyle.fontSize).toBe("20px");
+    expect(farmStyle.lineHeight).toBe("24px");
 
     const waTitleStyle = getComputedStyle(waTitle);
     expect(waTitleStyle.fontSize).toBe("17px");
