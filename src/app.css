@@ -37,7 +37,9 @@ body {
   justify-content: space-between;
   gap: var(--space-4);
   flex-wrap: nowrap;
+  /* Lock the cream band at 68px — min-height alone grows to ~81px around BotLink. */
   min-height: 68px;
+  height: 68px;
   padding: var(--space-2) var(--space-4);
   border-bottom: var(--stroke-hairline) solid var(--line);
 }

@@ -73,7 +73,7 @@ describe("Dashboard", () => {
     expect(style.minHeight).toBe("44px");
   });
 
-  // Farm name: 20/24 under .top; band stays 68px. WhatsApp stays 17/22.
+  // Farm name: 20/24 under .top; band locked at main’s 68px chrome. WhatsApp stays 17/22.
   it("keeps a readable farm name in the 68px header and WhatsApp at previous title size", () => {
     const { container } = show();
     const top = container.querySelector("header.top");
@@ -86,7 +86,11 @@ describe("Dashboard", () => {
     expect(wa).toBeTruthy();
     expect(waTitle).toBeTruthy();
 
-    expect(getComputedStyle(top).minHeight).toBe("68px");
+    const topStyle = getComputedStyle(top);
+    expect(topStyle.minHeight).toBe("68px");
+    expect(topStyle.height).toBe("68px");
+    // jsdom keeps the token shorthand; matches main’s 8px / 16px band padding.
+    expect(topStyle.padding).toBe("var(--space-2) var(--space-4)");
 
     const farmStyle = getComputedStyle(farmName);
     expect(farmStyle.fontSize).toBe("20px");
