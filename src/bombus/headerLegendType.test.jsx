@@ -136,13 +136,15 @@ describe("header + legend type scale", () => {
     const notesLabel = container.querySelector(".bb-details__notes-label");
     const notes = container.querySelector(".bb-details__notes");
 
-    expect(px(getComputedStyle(eyebrow).fontSize)).toBeGreaterThanOrEqual(16);
-    expect(px(getComputedStyle(code).fontSize)).toBeGreaterThanOrEqual(28);
-    expect(px(getComputedStyle(badge).fontSize)).toBeGreaterThanOrEqual(16);
+    // Mid-band details (still above pre-#7; not tip 16/28/18).
+    expect(px(getComputedStyle(eyebrow).fontSize)).toBe(14);
+    expect(px(getComputedStyle(code).fontSize)).toBe(26);
+    expect(px(getComputedStyle(badge).fontSize)).toBe(14);
     expect(badge.classList.contains("bb-badge--sm")).toBe(false);
-    expect(px(getComputedStyle(dt).fontSize)).toBeGreaterThanOrEqual(16);
-    expect(px(getComputedStyle(dd).fontSize)).toBeGreaterThanOrEqual(18);
-    expect(px(getComputedStyle(notesLabel).fontSize)).toBeGreaterThanOrEqual(16);
-    expect(px(getComputedStyle(notes).fontSize)).toBeGreaterThanOrEqual(18);
+    expect(px(getComputedStyle(dt).fontSize)).toBe(14);
+    expect(px(getComputedStyle(dd).fontSize)).toBe(16);
+    expect(px(getComputedStyle(notesLabel).fontSize)).toBe(14);
+    expect(px(getComputedStyle(notes).fontSize)).toBe(16);
+    expect(px(getComputedStyle(notes).lineHeight)).toBe(24);
   });
 });

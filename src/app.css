@@ -76,16 +76,34 @@ body {
   background: #121f18;
 }
 
+/* Header WhatsApp: same BotLink chrome, scaled to fit the 68px band (~52px tall). */
 .wa-header {
+  box-sizing: border-box;
   flex: 0 0 auto;
   width: max-content;
   max-width: 100%;
   min-width: 44px;
+  min-height: 52px;
+  padding: 6px 8px 6px 6px;
+  gap: var(--space-2);
+}
+
+.wa-header .bb-botlink__icon {
+  width: 40px;
+  height: 40px;
 }
 
 .wa-header .bb-botlink__title {
   flex: none;
   white-space: nowrap;
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.wa-header .bb-botlink__go {
+  width: 30px;
+  height: 30px;
+  margin-right: 0;
 }
 
 .load-notice {

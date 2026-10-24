@@ -83,18 +83,18 @@
 }
 .bb-details__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
 .bb-details__title { display: flex; align-items: center; gap: var(--space-3); }
-.bb-details__eyebrow { font-size: 16px; line-height: 20px; font-weight: 700; letter-spacing: .02em; color: var(--ink-muted); }
-.bb-details__code { font-family: var(--font-mono); font-size: 28px; line-height: 32px; font-weight: 600; letter-spacing: .02em; }
+.bb-details__eyebrow { font-size: 14px; line-height: 18px; font-weight: 700; letter-spacing: .02em; color: var(--ink-muted); }
+.bb-details__code { font-family: var(--font-mono); font-size: 26px; line-height: 30px; font-weight: 600; letter-spacing: .02em; }
 .bb-details__close { margin: -4px -12px 0 0; }
 .bb-details__status { margin-top: var(--space-3); display: flex; justify-content: flex-start; }
-.bb-details__status .bb-badge { font-size: 16px; line-height: 20px; font-weight: 700; }
+.bb-details__status .bb-badge { font-size: 14px; line-height: 18px; font-weight: 700; }
 .bb-details__list { margin: var(--space-4) 0 0; padding-top: var(--space-3); border-top: var(--stroke-hairline) solid var(--line); display: grid; gap: var(--space-3); }
 .bb-details__row { display: grid; gap: 2px; }
-.bb-details__row dt { font-size: 16px; line-height: 20px; color: var(--ink-muted); }
-.bb-details__row dd { margin: 0; font-size: 18px; line-height: 24px; }
+.bb-details__row dt { font-size: 14px; line-height: 18px; color: var(--ink-muted); }
+.bb-details__row dd { margin: 0; font-size: 16px; line-height: 22px; }
 .bb-details__notes-block { margin-top: var(--space-3); }
-.bb-details__notes-label { font-size: 16px; line-height: 20px; color: var(--ink-muted); margin-bottom: 4px; }
-.bb-details__notes { margin: 0; padding: var(--space-3); border-radius: var(--radius-md); background: var(--surface-sunken); font-size: 18px; line-height: 26px; }
+.bb-details__notes-label { font-size: 14px; line-height: 18px; color: var(--ink-muted); margin-bottom: 4px; }
+.bb-details__notes { margin: 0; padding: var(--space-3); border-radius: var(--radius-md); background: var(--surface-sunken); font-size: 16px; line-height: 24px; }
 .bb-details__notes.is-empty { color: var(--ink-muted); }
 
 /* ---------- HiveMap ---------- */

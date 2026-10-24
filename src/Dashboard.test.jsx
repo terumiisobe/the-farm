@@ -61,7 +61,7 @@ describe("Dashboard", () => {
     expect(container.querySelector(".map-build")).toBeNull();
   });
 
-  it("names the WhatsApp control as a new tab and keeps a 44 by 44 hit target", () => {
+  it("names the WhatsApp control as a new tab and keeps a usable hit target", () => {
     show();
     const link = screen.getByRole("link", { name: NEW_TAB_NAME });
 
@@ -70,21 +70,23 @@ describe("Dashboard", () => {
 
     const style = getComputedStyle(link);
     expect(style.minWidth).toBe("44px");
-    expect(style.minHeight).toBe("44px");
+    expect(style.minHeight).toBe("52px");
   });
 
-  // Farm name: 20/24 under .top; band locked at main’s 68px chrome. WhatsApp stays 17/22.
-  it("keeps a readable farm name in the 68px header and WhatsApp at previous title size", () => {
+  // Farm name: 20/24 under .top; band 68px. Header WhatsApp scaled to fit (~52px, title 15/20).
+  it("keeps a readable farm name in the 68px header and a fitted WhatsApp control", () => {
     const { container } = show();
     const top = container.querySelector("header.top");
     const farmName = container.querySelector(".top h1");
     const wa = container.querySelector("a.wa-header");
     const waTitle = container.querySelector(".wa-header .bb-botlink__title");
+    const waIcon = container.querySelector(".wa-header .bb-botlink__icon");
 
     expect(top).toBeTruthy();
     expect(farmName).toBeTruthy();
     expect(wa).toBeTruthy();
     expect(waTitle).toBeTruthy();
+    expect(waIcon).toBeTruthy();
 
     const topStyle = getComputedStyle(top);
     expect(topStyle.minHeight).toBe("68px");
@@ -97,11 +99,13 @@ describe("Dashboard", () => {
     expect(farmStyle.lineHeight).toBe("24px");
 
     const waTitleStyle = getComputedStyle(waTitle);
-    expect(waTitleStyle.fontSize).toBe("17px");
-    expect(waTitleStyle.lineHeight).toBe("22px");
+    expect(waTitleStyle.fontSize).toBe("15px");
+    expect(waTitleStyle.lineHeight).toBe("20px");
 
     const waStyle = getComputedStyle(wa);
-    expect(waStyle.minHeight).toBe("44px");
+    expect(waStyle.minHeight).toBe("52px");
+    expect(getComputedStyle(waIcon).width).toBe("40px");
+    expect(getComputedStyle(waIcon).height).toBe("40px");
   });
 
   it("keeps an empty basemap status before the map until a failure line is set", () => {

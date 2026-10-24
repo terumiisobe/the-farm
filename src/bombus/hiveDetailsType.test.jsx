@@ -127,7 +127,7 @@ describe("HiveDetails type scale and status layout", () => {
     expect(Math.abs(contentLeft(statusRow) - contentLeft(dt))).toBeLessThanOrEqual(1);
   });
 
-  it("meets details type minima and never uses bb-badge--sm", () => {
+  it("meets mid-band details type (above pre-#7, below tip floors) and never uses bb-badge--sm", () => {
     const { container } = render(<HiveDetails hive={hive} today="2024-09-10" />);
     const eyebrow = container.querySelector(".bb-details__eyebrow");
     const code = container.querySelector(".bb-details__code");
@@ -137,17 +137,21 @@ describe("HiveDetails type scale and status layout", () => {
     const notesLabel = container.querySelector(".bb-details__notes-label");
     const notes = container.querySelector(".bb-details__notes");
 
-    expect(px(getComputedStyle(eyebrow).fontSize)).toBeGreaterThanOrEqual(16);
-    expect(px(getComputedStyle(eyebrow).lineHeight)).toBeGreaterThanOrEqual(20);
-    expect(px(getComputedStyle(code).fontSize)).toBeGreaterThanOrEqual(28);
-    expect(px(getComputedStyle(code).lineHeight)).toBeGreaterThanOrEqual(32);
-    expect(px(getComputedStyle(badge).fontSize)).toBeGreaterThanOrEqual(16);
-    expect(px(getComputedStyle(badge).lineHeight)).toBeGreaterThanOrEqual(20);
-    expect(px(getComputedStyle(dt).fontSize)).toBeGreaterThanOrEqual(16);
-    expect(px(getComputedStyle(dd).fontSize)).toBeGreaterThanOrEqual(18);
-    expect(px(getComputedStyle(notesLabel).fontSize)).toBeGreaterThanOrEqual(16);
-    expect(px(getComputedStyle(notes).fontSize)).toBeGreaterThanOrEqual(18);
-    expect(px(getComputedStyle(notes).lineHeight)).toBeGreaterThanOrEqual(26);
+    // Mid band: larger than pre-#7 main, smaller than post-#7 tip (16/28/16/18…).
+    expect(px(getComputedStyle(eyebrow).fontSize)).toBe(14);
+    expect(px(getComputedStyle(eyebrow).lineHeight)).toBe(18);
+    expect(px(getComputedStyle(code).fontSize)).toBe(26);
+    expect(px(getComputedStyle(code).lineHeight)).toBe(30);
+    expect(px(getComputedStyle(badge).fontSize)).toBe(14);
+    expect(px(getComputedStyle(badge).lineHeight)).toBe(18);
+    expect(px(getComputedStyle(dt).fontSize)).toBe(14);
+    expect(px(getComputedStyle(dt).lineHeight)).toBe(18);
+    expect(px(getComputedStyle(dd).fontSize)).toBe(16);
+    expect(px(getComputedStyle(dd).lineHeight)).toBe(22);
+    expect(px(getComputedStyle(notesLabel).fontSize)).toBe(14);
+    expect(px(getComputedStyle(notesLabel).lineHeight)).toBe(18);
+    expect(px(getComputedStyle(notes).fontSize)).toBe(16);
+    expect(px(getComputedStyle(notes).lineHeight)).toBe(24);
 
     expect(badge.classList.contains("bb-badge--sm")).toBe(false);
     expect(badge.className).toMatch(/bb-status--stable/);
