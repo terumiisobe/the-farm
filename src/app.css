@@ -37,7 +37,9 @@ body {
   justify-content: space-between;
   gap: var(--space-4);
   flex-wrap: nowrap;
+  /* Lock the cream band at 68px — min-height alone grows to ~81px around BotLink. */
   min-height: 68px;
+  height: 68px;
   padding: var(--space-2) var(--space-4);
   border-bottom: var(--stroke-hairline) solid var(--line);
 }
@@ -49,8 +51,8 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   font-family: var(--font-display);
-  font-size: 15px;
-  line-height: 20px;
+  font-size: 20px;
+  line-height: 24px;
   font-weight: 600;
 }
 
@@ -74,16 +76,34 @@ body {
   background: #121f18;
 }
 
+/* Header WhatsApp: same BotLink chrome, scaled to fit the 68px band (~52px tall). */
 .wa-header {
+  box-sizing: border-box;
   flex: 0 0 auto;
   width: max-content;
   max-width: 100%;
   min-width: 44px;
+  min-height: 52px;
+  padding: 6px 8px 6px 6px;
+  gap: var(--space-2);
+}
+
+.wa-header .bb-botlink__icon {
+  width: 40px;
+  height: 40px;
 }
 
 .wa-header .bb-botlink__title {
   flex: none;
   white-space: nowrap;
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.wa-header .bb-botlink__go {
+  width: 30px;
+  height: 30px;
+  margin-right: 0;
 }
 
 .load-notice {
