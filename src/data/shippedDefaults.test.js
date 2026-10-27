@@ -36,13 +36,13 @@ describe("shipped defaults", () => {
     expect(OPERATOR_STILL.image).toBe("/assets/farm-basemap.png");
     expect(OPERATOR_STILL.bounds).toEqual(OPERATOR_STILL_BOUNDS);
     expect(OPERATOR_STILL_BOUNDS).toEqual([
-      [-25.762684, -49.189889],
-      [-25.761622, -49.188210],
+      [-25.762862, -49.189754],
+      [-25.761621, -49.188175],
     ]);
     expect(example.basemap.image).toBe("/assets/farm-basemap.png");
     expect(example.basemap.bounds).toEqual([
-      [-25.762684, -49.189889],
-      [-25.761622, -49.188210],
+      [-25.762862, -49.189754],
+      [-25.761621, -49.188175],
     ]);
     expect(example.basemap.satellite.tiles).toContain("tiles.maps.eox.at");
     expect(readFarmSource({})).toEqual({

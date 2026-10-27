@@ -56,7 +56,7 @@ VITE_USER_ID=1
 
 `VITE_API_BASE_URL` is the origin, with no trailing slash. `VITE_MELIPONARIO_ID` is the id in `GET /v1/meliponarios/{id}`. `VITE_USER_ID` is sent as the `X-User-Id` header. If either id is missing or not digits, the page shows a load error.
 
-The response supplies the farm name, the address, a freshness time, and the hives. Optional `center`, `bounds`, and `basemap.image` + `basemap.bounds` (plus attribution) carry place and the farm still. When the API omits a still, the app paints the local operator still (`/assets/farm-basemap.png` with SW/NE `[[-25.762684, -49.189889], [-25.761622, -49.188210]]`) and keeps local EOX `satellite` / sample `fallback`. An API farm draws no section polygons. WhatsApp stays the local constant.
+The response supplies the farm name, the address, a freshness time, and the hives. Optional `center`, `bounds`, and `basemap.image` + `basemap.bounds` (plus attribution) carry place and the farm still. When the API omits a still, the app paints the local operator still (`/assets/farm-basemap.png` with SW/NE `[[-25.762862, -49.189754], [-25.761621, -49.188175]]`) and keeps local EOX `satellite` / sample `fallback`. An API farm draws no section polygons. WhatsApp stays the local constant.
 
 Each hive uses these fields:
 
@@ -76,12 +76,12 @@ Portuguese status words (`estavel`, `perdida`, and the rest) still map through `
 
 The map paints one basemap. A farm still wins when the payload includes `basemap.image` and `basemap.bounds` and that image loads, or when the local operator still is composed in because the GET omitted a picture. Free EOX Sentinel-2 Cloudless 2025 tiles are the fallback when the still fails before it decodes. The `fallback` image is the offline sample, and it is also the paint after every live tile has failed. No account and no API key.
 
-Local still defaults use `/assets/farm-basemap.png` with operator SW/NE `[[-25.762684, -49.189889], [-25.761622, -49.188210]]`. EOX stays on `basemap.satellite` as fallback. `src/data/example-farm.json` is a **test fixture only** (same still box). The browser does not geocode `address`. Do not commit a street, a house number, or a private geocode.
+Local still defaults use `/assets/farm-basemap.png` with operator SW/NE `[[-25.762862, -49.189754], [-25.761621, -49.188175]]`. EOX stays on `basemap.satellite` as fallback. `src/data/example-farm.json` is a **test fixture only** (same still box). The browser does not geocode `address`. Do not commit a street, a house number, or a private geocode.
 
 ```json
 "basemap": {
   "image": "/assets/farm-basemap.png",
-  "bounds": [[-25.762684, -49.189889], [-25.761622, -49.188210]],
+  "bounds": [[-25.762862, -49.189754], [-25.761621, -49.188175]],
   "attribution": "Imagem da propriedade",
   "satellite": {
     "tiles": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg",
@@ -90,7 +90,7 @@ Local still defaults use `/assets/farm-basemap.png` with operator SW/NE `[[-25.7
   },
   "fallback": {
     "image": "/assets/farm-basemap.png",
-    "bounds": [[-25.762684, -49.189889], [-25.761622, -49.188210]],
+    "bounds": [[-25.762862, -49.189754], [-25.761621, -49.188175]],
     "attribution": "Imagem de satélite: exemplo · coordenadas ilustrativas",
     "alt": "Imagem de satélite da propriedade"
   }

@@ -4,18 +4,18 @@ import { groundSpanMeters, metersPerPixelForBounds } from "./mapScale.js";
 
 /** Operator SW/NE for the farm still (PR #4). */
 const OPERATOR_BOUNDS = [
-  [-25.762684, -49.189889],
-  [-25.761622, -49.188210],
+  [-25.762862, -49.189754],
+  [-25.761621, -49.188175],
 ];
 
 describe("mapScale", () => {
-  it("reads ~118 m north-south and ~168 m east-west for the operator still corners", () => {
+  it("reads ~138 m north-south and ~158 m east-west for the operator still corners", () => {
     const { northSouthM, eastWestM } = groundSpanMeters(OPERATOR_BOUNDS);
 
-    expect(northSouthM).toBeGreaterThan(117);
-    expect(northSouthM).toBeLessThan(119);
-    expect(eastWestM).toBeGreaterThan(167);
-    expect(eastWestM).toBeLessThan(169);
+    expect(northSouthM).toBeGreaterThan(137);
+    expect(northSouthM).toBeLessThan(139);
+    expect(eastWestM).toBeGreaterThan(157);
+    expect(eastWestM).toBeLessThan(159);
   });
 
   it("keeps the shipped still bounds on those operator corners", () => {
