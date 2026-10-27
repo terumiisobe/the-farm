@@ -221,7 +221,8 @@
       if (props.minZoom != null) return props.minZoom;
       if (!size.w) return 0;
       var box = baseBox || dataBox; if (!box) return 0;
-      return fitView(box, size.w, size.h, 0, maxZoom).z - 0.5;
+      // Still/sample: floor at exact image fit so zoom-out cannot letterbox past the picture.
+      return fitView(box, size.w, size.h, 0, maxZoom).z;
     }, [props.minZoom, baseBox, dataBox, size.w, size.h, maxZoom]);
 
     // measure
