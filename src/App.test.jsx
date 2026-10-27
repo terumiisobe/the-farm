@@ -13,8 +13,8 @@ const API = {
   userId: "1",
 };
 const STILL_BOUNDS = [
-  [-25.762684, -49.189889],
-  [-25.761622, -49.188210],
+  [-25.762862, -49.189754],
+  [-25.761621, -49.188175],
 ];
 const realRect = HTMLElement.prototype.getBoundingClientRect;
 

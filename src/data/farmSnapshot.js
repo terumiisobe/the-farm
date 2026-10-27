@@ -79,8 +79,8 @@ const FAILED = {
 
 /** Operator still corners (SW / NE). Used when the GET snapshot omits basemap.image. */
 export const OPERATOR_STILL_BOUNDS = Object.freeze([
-  Object.freeze([-25.762684, -49.189889]),
-  Object.freeze([-25.761622, -49.188210]),
+  Object.freeze([-25.762862, -49.189754]),
+  Object.freeze([-25.761621, -49.188175]),
 ]);
 
 /** Local still painted under API hives when the snapshot has no farm picture. */

@@ -6,12 +6,12 @@
   "image": "/assets/farm-basemap.png",
   "bounds": [
    [
-    -25.762684,
-    -49.189889
+    -25.762862,
+    -49.189754
    ],
    [
-    -25.761622,
-    -49.188210
+    -25.761621,
+    -49.188175
    ]
   ],
   "attribution": "Imagem da propriedade",
@@ -24,12 +24,12 @@
    "image": "/assets/farm-basemap.png",
    "bounds": [
     [
-     -25.762684,
-     -49.189889
+     -25.762862,
+     -49.189754
     ],
     [
-     -25.761622,
-     -49.188210
+     -25.761621,
+     -49.188175
     ]
    ],
    "attribution": "Imagem de satélite: exemplo · coordenadas ilustrativas",
@@ -38,12 +38,12 @@
   "image": "/assets/farm-basemap.png",
   "bounds": [
    [
-    -25.762684,
-    -49.189889
+    -25.762862,
+    -49.189754
    ],
    [
-    -25.761622,
-    -49.188210
+    -25.761621,
+    -49.188175
    ]
   ],
   "attribution": "Imagem da propriedade"
