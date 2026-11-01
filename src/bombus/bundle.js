@@ -413,18 +413,9 @@
       layers.push(h("svg", { key: "sections", className: "bb-map__sections", width: size.w, height: size.h, "aria-hidden": "true" }, polys));
       layers.push(h("div", { key: "seclabels", className: "bb-map__labels", "aria-hidden": "true" }, secLabels));
 
-      // markers
-      var labelMin = props.labelMinZoom != null ? props.labelMinZoom : -Infinity;
-      var showLabels = view.z >= labelMin;
-      var gap = props.labelMinGap != null ? props.labelMinGap : 40;
+      // markers — code pill always shown with the hive icon (no zoom/gap hide)
       var visible = projHives.filter(function (ph) { return !hidden[statusOf(ph.hive.status).key]; })
         .map(function (ph) { return { ph: ph, p: toScreen(ph) }; });
-      // a code pill shows only when its nearest neighbour is at least `gap` px away
-      visible.forEach(function (m) {
-        var best = Infinity;
-        visible.forEach(function (o) { if (o !== m) { var d = Math.hypot(o.p.x - m.p.x, o.p.y - m.p.y); if (d < best) best = d; } });
-        m.roomy = best >= gap;
-      });
       var markers = visible
         .sort(function (m, n2) { return m.p.y - n2.p.y; })
         .map(function (m) {
@@ -433,7 +424,7 @@
           var hv = ph.hive;
           var key = String(hv.code), isSel = selected === key;
           return h(HiveMarker, { key: key, code: key, status: hv.status, species: hv.species, statuses: statuses,
-            selected: isSel, showLabel: (showLabels && m.roomy) || isSel,
+            selected: isSel, showLabel: true,
             style: { left: p.x + "px", top: p.y + "px", zIndex: isSel ? 5 : 2 },
             onClick: function () { selectHive(hv); } });
         });
