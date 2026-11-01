@@ -114,9 +114,9 @@ export interface HiveMapProps {
   minZoom?: number;
   /** Default 21. */
   maxZoom?: number;
-  /** Hide code pills below this zoom (selected hive always labelled). Default: always shown. */
+  /** @deprecated Unused — code pills always show under every hive marker. */
   labelMinZoom?: number;
-  /** A hive's code pill is hidden while another hive is closer than this on screen (zoom in to see it). Default 40. */
+  /** @deprecated Unused — code pills always show under every hive marker. */
   labelMinGap?: number;
   /** Padding in px around the fitted hives. Default 48. */
   fitPadding?: number;
