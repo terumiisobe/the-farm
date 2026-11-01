@@ -2,20 +2,20 @@ import { describe, expect, it } from "vitest";
 import example from "./example-farm.json";
 import { groundSpanMeters, metersPerPixelForBounds } from "./mapScale.js";
 
-/** Operator SW/NE for the farm still (PR #4). */
+/** Operator SW/NE for the farm still. */
 const OPERATOR_BOUNDS = [
-  [-25.762862, -49.189754],
-  [-25.761621, -49.188175],
+  [-25.762741, -49.189967],
+  [-25.761562, -49.188100],
 ];
 
 describe("mapScale", () => {
-  it("reads ~138 m north-south and ~158 m east-west for the operator still corners", () => {
+  it("reads ~131 m north-south and ~187 m east-west for the operator still corners", () => {
     const { northSouthM, eastWestM } = groundSpanMeters(OPERATOR_BOUNDS);
 
-    expect(northSouthM).toBeGreaterThan(137);
-    expect(northSouthM).toBeLessThan(139);
-    expect(eastWestM).toBeGreaterThan(157);
-    expect(eastWestM).toBeLessThan(159);
+    expect(northSouthM).toBeGreaterThan(130);
+    expect(northSouthM).toBeLessThan(132);
+    expect(eastWestM).toBeGreaterThan(186);
+    expect(eastWestM).toBeLessThan(188);
   });
 
   it("keeps the shipped still bounds on those operator corners", () => {

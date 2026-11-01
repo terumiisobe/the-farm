@@ -15,7 +15,7 @@ const EOX_ATTR = "EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH 
 const SAMPLE_ATTR = "Imagem de satélite: exemplo · coordenadas ilustrativas";
 const SAMPLE_ALT = "Imagem de satélite da propriedade";
 const SAMPLE_IMAGE = "/assets/farm-basemap.png";
-const SAMPLE_BOUNDS = [[-25.762862, -49.189754], [-25.761621, -49.188175]];
+const SAMPLE_BOUNDS = [[-25.762741, -49.189967], [-25.761562, -49.188100]];
 const STATUS_IMAGE = "Satélite ao vivo indisponível. Mostrando a imagem salva da propriedade.";
 const STATUS_NONE = "Satélite ao vivo indisponível no momento.";
 const STATUS_SOFT = "Não foi possível confirmar o satélite. Mantendo o mapa ao vivo.";
@@ -69,7 +69,7 @@ describe("parseFarmBasemap and selectBasemap", () => {
     expect(Object.keys(chosen.paint).sort()).toEqual(["attribution", "bounds", "image"]);
 
     chosen.paint.bounds[0][0] = 0;
-    expect(raw.bounds[0][0]).toBe(-25.762862);
+    expect(raw.bounds[0][0]).toBe(-25.762741);
   });
 
   it("keeps the still while it is open or shown", () => {
@@ -200,7 +200,7 @@ describe("parseFarmBasemap and selectBasemap", () => {
     expect(chosen.status).toBe(STATUS_IMAGE);
 
     chosen.paint.bounds[0][0] = 0;
-    expect(example.basemap.fallback.bounds[0][0]).toBe(-25.762862);
+    expect(example.basemap.fallback.bounds[0][0]).toBe(-25.762741);
   });
 
   it("names limited imagery for a sample that is not covering a tile failure", () => {
